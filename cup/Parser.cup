@@ -1,0 +1,80 @@
+// Technische Universitaet Muenchen 
+// Fakultaet fuer Informatik 
+// Riitta Hoellerer
+//
+// Praktikum des Uebersetzerbaus
+// SS 2001
+//
+// mimasyntax.cup
+// Cup specification for Mima 
+//  
+// CUP - LALR Parser Generator for Java
+// home page: 
+// /usr/proj/uebbau/CUP/
+//
+//
+package de.brainiiiii.sqlgen;
+
+import java.util.*;
+import java.io.*;
+import java_cup.runtime.Symbol;
+import node.*;
+
+
+/* Preliminaries to use the scanner.  */
+scan with {: return lexer.next_token(); :};
+
+
+parser code {: 
+  public boolean syntaxErrors;
+
+
+  Lexer lexer;
+
+  public Parser(Lexer lex) {
+    lexer = lex;
+  }
+
+  
+  public void report_error(String message, Object info) {
+    syntaxErrors = true;
+    
+    System.out.print(message);
+    
+    if ( !(info instanceof Symbol) ) return;
+    Symbol symbol = (Symbol) info;
+    
+    if ( symbol.left < 0 || symbol.right < 0 ) return;
+    
+    System.out.println(" at line "+symbol.left+", column "+symbol.right);
+  }
+:}; 
+
+
+
+/* Terminals (tokens returned by lexer). */
+terminal			PACKAGE, PROJECT, DEFINE, TYPE, DOT, SC;
+terminal Integer 	INTCONST;
+terminal String  	IDENT;
+
+
+
+non terminal Project		project;
+non terminal PackageDekl	package_dekl;
+non terminal PackageDekl	package_path;
+
+
+
+project ::= PROJECT IDENT:i package_dekl:p
+                    {: RESULT = new Project(i,p); :};
+
+package_dekl ::= PACKAGE IDENT:r package_path:p SC
+					{: RESULT = new PackageDekl(r, p); :}
+			|	
+					{: RESULT = new PackageDekl(); :};
+
+package_path ::= DOT IDENT:s package_path:p
+					{: RESULT = new PackageDekl(s, p); :}
+			|	 
+					{: RESULT = new PackageDekl(); :};
+	
