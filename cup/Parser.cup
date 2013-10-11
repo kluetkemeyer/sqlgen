@@ -52,12 +52,13 @@ parser code {:
 
 
 /* Terminals (tokens returned by lexer). */
-terminal			PACKAGE, PROJECT, DEFINE, TYPE, ENUM, TABLE; 
+terminal			PACKAGE, PROJECT, DEFINE, TYPE, ENUM_DEF, TABLE; 
+terminal 			SELECT_DEF;
 terminal			INDICES, DATA, PRIMARY, AS;
 terminal			UNIQUE, INDEX, FULLTEXT;
 terminal			AUTO_ID, NULL;
-terminal			NULLABLE, ID, STRING, INT, BOOL, CHAR, DOUBLE, TEXT, DATE, DATETIME, TIME, REFERENCE;
-terminal 			COMMA, EQ, DOT, SC, LBRACE, RBRACE, OPEN, CLOSE;
+terminal			NULLABLE, ID, STRING, INT, BOOL, CHAR, DOUBLE, TEXT, DATE, DATETIME, TIME, ENUM, REFERENCE;
+terminal 			COMMA, EQ, DOT, SC, LBRACE, RBRACE, OPEN, CLOSE, OLBRACE, ORBRACE;
 terminal Integer 	INTCONST;
 terminal String  	IDENT;
 terminal Boolean	BOOLCONST;
@@ -85,6 +86,25 @@ non terminal ColumnDeklList 		tableDekl_data;
 non terminal IndexDeklList 			tableDekl_indices;
 non terminal IndexDekl 				index_dekl;
 non terminal IndexDeklList			index_dekl_list;
+non terminal SelectDekl				selectDekl;
+non terminal ColumnDeklList			optionalParamList;
+
+
+
+terminal SQL_SELECT, SQL_FROM, SQL_WHERE, SQL_ORDER, SQL_LIMIT;
+
+non terminal SqlSelect				sqlSelect;
+non terminal SqlExpr				sqlSelect_where;
+non terminal SqlSelectSourceList	sqlSelect_from;
+non terminal SqlSqlOrderElementList sqlSelect_order;
+non terminal SqlLimit				sqlSelect_limit;
+non terminal SqlSelectColumn		sqlSelectColumn;
+non terminal SqlSelectColumnList	sqlSelectColumnList;
+non terminal SqlExpr				sqlExpression;
+non terminal SqlSelectSourceList	sqlSelectSourceList;
+non terminal SqlSelectSource		sqlSelectSource;
+non terminal SqlSqlOrderElementList sqlSelectOrderElementList;
+non terminal SqlSqlOrderElement	 	sqlSelectOrderElement;
 
 
 
@@ -112,13 +132,23 @@ package_path ::=
 	
 column_dekl ::=
 				IDENT:s optionalBracedIdent:p AS column_type_dekl:t default_value:d
-					{: RESULT = new SingleColumnDekl(s, p, t, d); :};
+					{: RESULT = new SingleColumnDekl(s, p, t, d); :}
+			|	IDENT:s OLBRACE INTCONST:l ORBRACE optionalBracedIdent:p AS column_type_dekl:t default_value:d
+					{: RESULT = new ArrayColumnDekl(s, l, p, t, d); :};
 					
 column_dekl_list ::= 
-				column_dekl_list:l column_dekl:e
+				column_dekl_list:l COMMA column_dekl:e
 					{: RESULT = l.append(e); :}
 			|	column_dekl:e
 					{: RESULT = new ColumnDeklList(e); :};
+					
+optionalParamList ::=
+				LBRACE column_dekl_list:l RBRACE
+					{: RESULT = l; :}
+			|	LBRACE RBRACE
+					{: RESULT = new ColumnDeklList(); }
+			|
+					{: RESULT = new ColumnDeklList(); };
 				
 optionalBracedIdent ::=
 				LBRACE IDENT:s RBRACE
@@ -175,18 +205,20 @@ nonnullable_column_dekl ::=
 					{: RESULT = new ColumnReferenceType(t, c); :};
 
 enum_dekl ::=
-				DEFINE TYPE LBRACE ENUM RBRACE IDENT:s OPEN ident_list:o CLOSE
+				DEFINE TYPE LBRACE ENUM_DEF RBRACE IDENT:s OPEN ident_list:o CLOSE
 					{: RESULT = new EnumDekl(s, o); :};
 					
 string_list ::=
 				string_list:l COMMA IDENT:s
 					{: RESULT = l.append(s); :}
-			|	
-					{: RESULT = new StringList(); :};
+			|	IDENT:s
+					{: RESULT = new StringList(s); :};
 					
 
 block ::=
 				enum_dekl:d
+					{: RESULT = d; :}
+			|	selectDekl:d
 					{: RESULT = d; :}
 			|	tableDekl:d
 					{: RESULT = d; :};
@@ -199,6 +231,9 @@ blockList ::=
 					
 tableDekl ::= DEFINE TABLE IDENT:n optionalBracedIdent:p OPEN tableDekl_primary:prim tableDekl_data:data tableDekl_indices:ind CLOSE
 					{: RESULT = new TableDekl(n, p, prim, data, ind); :};
+					
+selectDekl ::= DEFINE SELECT_DEF IDENT:n optionalParamList:p OPEN sqlSelect:s CLOSE
+					{: RESULT = new SelectDekl(n, p, s); :};
 
                     
 tableDekl_primary ::=
@@ -220,10 +255,10 @@ tableDekl_indices ::=
 					{: RESULT = new IndexDeklList(); :};
 					
 index_dekl_list ::=
-				index_dekl_list:l COMMA index_dekl:e
+				index_dekl:e COMMA index_dekl_list:l
 					{: RESULT = l.append(e); :}
-			|
-					{: RESULT = new IndexDeklList(); :};
+			|	index_dekl:e
+					{: RESULT = new IndexDeklList(e); :};
 					
 index_dekl ::=
 				FULLTEXT INDEX OPEN string_list:l CLOSE
@@ -234,4 +269,48 @@ index_dekl ::=
 					{: RESULT = new IndexDekl(true, true, l); :}
 			|	UNIQUE OPEN string_list:l CLOSE
 					{: RESULT = new IndexDekl(false, true, l); :};
+					
+					
+/* SQL Definition */
+sqlSelect ::=	
+				SQL_SELECT sqlSelectColumnList:c sqlSelect_from:f sqlSelect_where:w sqlSelect_order:o sqlSelect_limit:l
+					{: RESULT = new SqlSelect(c, f, w, o, l); :};
+					
+sqlSelect_from ::=
+				SQL_FROM sqlSelectSourceList:l
+					{: RESULT = l; :}
+			|	
+					{: RESULT = null; :};
+				
+sqlSelect_where ::=
+				SQL_WHERE sqlExpression:e
+					{: RESULT = e; :}
+			|
+					{: RESULT = null; :};
 
+sqlSelect_limit ::= 
+				SQL_LIMIT INTCONST:o COMMA INTCONST:l
+					{: RESULT = new SqlLimit(o, l); :}
+			|	
+					{: RESULT = null; :};
+				
+					
+					
+sqlSelectColumnList ::= 
+				sqlSelectColumnList:l COMMA sqlSelectColumn:c
+					{: RESULT = l.append(c); :}
+			|	sqlSelectColumn:c
+					{: RESULT = new SqlSelectColumnList(c); :};
+					
+sqlSelectColumn ::=
+				sqlExpression:e AS Ident:s
+					{: RESULT = new SqlSelectColumn(e, s); :}
+			|	sqlExpression:e
+					{: RESULT = new SqlSelectColumn(e, null); :}
+				
+					
+
+non terminal SqlSqlOrderElementList sqlSelect_order;
+non terminal SqlExpr				sqlExpression;
+non terminal SqlSelectSourceList	sqlSelectSourceList;
+non terminal SqlSelectSource		sqlSelectSource;

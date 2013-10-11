@@ -56,13 +56,35 @@ white_space = {new_line} | [ \t\f]
 "project"			{ return symbol(PROJECT); }
 "define"			{ return symbol(DEFINE); }
 "type"				{ return symbol(TYPE); }
-"enum"				{ return symbol(ENUM); }
+"enum"				{ return symbol(ENUM_DEF); }
 "table"				{ return symbol(TABLE); }
 "primary"			{ return symbol(PRIMARY); }
 "data"				{ return symbol(DATA); }
-"as"				{ return symbol(AS); }
-"int"             	{ return symbol(INT); }
-"bool"            	{ return symbol(BOOL); }
+"indices"			{ return symbol(INDICES); }
+"AS"				{ return symbol(AS); }
+"INDEX"				{ return symbol(INDEX); }
+"FULLTEXT"			{ return symbol(FULLTEXT); }
+"UNIQUE"			{ return symbol(UNIQUE); }
+
+/* column types */
+"NULLABLE"			{ return symbol(NULLABLE); }
+"ID"				{ return symbol(ID); }
+"INTEGER"          	{ return symbol(INT); }
+"BOOLEAN"          	{ return symbol(BOOL); }
+"CHAR"          	{ return symbol(CHAR); }
+"DOUBLE"          	{ return symbol(DOUBLE); }
+"TEXT"          	{ return symbol(TEXT); }
+"DATE"          	{ return symbol(DATE); }
+"ENUM"          	{ return symbol(ENUM); }
+"DATETIME"         	{ return symbol(DATETIME); }
+"STRING"			{ return symbol(STRING); }
+"REFERENCE"			{ return symbol(REFERENCE); }
+
+/* column values */
+"auto"				{ return symbol(AUTO_ID); }
+"NULL"				{ return symbol(NULL); }
+"TRUE"				{ return symbol(BOOLCONST, new Boolean(true)); }
+"FALSE"				{ return symbol(BOOLCONST, new Boolean(false)); }
 
 /* names */
 {Ident}           	{ return symbol(IDENT, yytext()); }
@@ -80,7 +102,16 @@ white_space = {new_line} | [ \t\f]
 ")"					{ return symbol(RBRACE); }
 "{"					{ return symbol(OPEN); }
 "}"					{ return symbol(CLOSE); }
+"="					{ return symbol(EQ); }
+"["					{ return symbol(OLBRACE); }
+"]"					{ return symbol(ORBRACE); }
 
+/* SQL Tokens */
+"SELECT"			{ return symbol(SQL_SELECT); }
+"FROM"				{ return symbol(SQL_FROM); }
+"WHERE"				{ return symbol(SQL_WHERE); }
+"ORDER BY"			{ return symbol(SQL_ORDER); }
+"LIMIT"				{ return symbol(SQL_LIMIT); }
 
 
 {white_space}     { /* ignore */ }

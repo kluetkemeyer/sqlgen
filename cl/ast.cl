@@ -24,6 +24,7 @@ PackageDekl ::= "String":ident PackageDekl
                  
 ProjectDeklBlock ::= { EnumDekl } "String":ident "String"*:options
 		| { TableDekl } "String":ident "String":physicalName ColumnDekl*:primaries ColumnDekl*:cols IndexDekl*:indices
+		| { SelectDekl } "String":ident ColumnDekl*:params SqlSelect:stmt
 			 
 ColumnDekl ::= { SingleColumnDekl } "String":ident "String":phyicalName ColumnDeklType:type DefaultValue:defaultValue
 		| { ArrayColumnDekl } "String":ident "int":arrayLength "String":phyicalName ColumnDeklType:type DefaultValue:defaultValue
@@ -52,3 +53,18 @@ NonNullableColumnDekl ::= { IDType }
 		| { EnumType } "String":enumName
 		| { TableReferenceType } "String":tableName
 		| { ColumnReferenceType } "String":tableName "String":columnName
+
+
+SqlExpr ::= {SqlColumnExpr} "String":tableName "String":columnName
+		| {SqlConstStringExpr} "String":value
+		| {SqlParamExpr} "String":name
+
+SqlSelectSource ::= {SqlTableSelectSource} "String":tableName "String":alias "boolean":isOptional
+
+SqlSelectColumn ::= SqlExpr:expr "String":alias
+
+SqlLimit ::= SqlExpr:offset SqlExpr:limit
+
+SqlOrderElement ::= SqlColumnExpr:column "boolean":ascending
+
+SqlSelect ::= SqlSelectColumn*:cols SqlSelectSource*:from SqlExpr:where SqlOrderElement*:orderBy SqlLimit:limit

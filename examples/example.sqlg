@@ -8,13 +8,13 @@ define type(enum) Gender {
 
 define table AddressSet (addr__set) {
 	primary {
-		ID (addressSetId) AS ID = auto
+		id (addressSetId) AS ID = auto
 	}
 }
 
 define table AddressLabel (addr__addr_label) {
 	primary {
-		ID (addressLabelId) AS ID = auto
+		id (addressLabelId) AS ID = auto
 	}
 	data {
 		label AS STRING(128)
@@ -26,7 +26,7 @@ define table AddressLabel (addr__addr_label) {
 
 define table City (addr__city) {
 	primary {
-		ID (cityId) AS ID = auto
+		id (cityId) AS ID = auto
 	}
 	data {
 		postcode AS NULLABLE STRING(10) = NULL,
@@ -46,9 +46,8 @@ define table Address (addr__addr) {
 }
 
 define table Person (base__person) {
-	brief { Saves all basic personal information related to a person. }
 	primary {
-		ID (personId) AS ID = auto
+		id (personId) AS ID = auto
 	}
 	data {
 		firstname AS STRING(255),
@@ -65,16 +64,14 @@ define table Person (base__person) {
 }
 
 define table Player (base__player) {
-	brief { Saves all players }
 	primary {
-		ID (playerId) AS REFERENCE(Person)
+		id (playerId) AS REFERENCE(Person)
 	}
 }
 
 define table Gym (base__gym) {
-	brief { Saves all gyms }
 	primary {
-		ID (gymId) AS ID = auto
+		id (gymId) AS ID = auto
 	}
 	data {
 		name AS STRING(255)
@@ -82,9 +79,8 @@ define table Gym (base__gym) {
 }
 
 define table TrainingsGroup (trn__group) {
-	brief { Defined trainings groups. }
 	primary {
-		ID (groupId) AS ID = auto
+		id (groupId) AS ID = auto
 	}
 	data {
 		title AS STRING(255),
@@ -94,9 +90,8 @@ define table TrainingsGroup (trn__group) {
 }
 
 define table Training (trn__training) {
-	brief { Saves all training sessions }
 	primary {
-		ID (trainingId) AS ID = auto
+		id (trainingId) AS ID = auto
 	}
 	data {
 		dateFrom AS DATETIME,
@@ -107,13 +102,13 @@ define table Training (trn__training) {
 
 define table Guestbook (gb__entry) {
 	primary {
-		ID (guestbookId) AS ID = auto
+		id (guestbookId) AS ID = auto
 	}
 	data {
 		dateEntry (e_date) AS DATETIME,
 		authorName AS STRING(255),
 		authorIP AS STRING(127),
-		isDeleted AS BOOLEAN = false,
+		isDeleted AS BOOLEAN = FALSE,
 		entryTitle (e_title) AS STRING(255),
 		entryText (e_text) AS TEXT
 	}
@@ -121,3 +116,13 @@ define table Guestbook (gb__entry) {
 		INDEX {dateEntry}
 	}
 }
+
+
+
+define select GuestbookEntries(INT offset, INT limit) {
+	SELECT				g.id, g.dateEntry, g.authorName, g.entryTitle, g.entryText
+	FROM						Guestbook AS g
+	WHERE				 g.isDeleted = FALSE
+	ORDER BY  g.dateEntry DESC
+	LIMIT					offset, limit
+} 
