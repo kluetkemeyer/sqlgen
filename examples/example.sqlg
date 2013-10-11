@@ -2,8 +2,8 @@ project tabletennisDatabase;
 package de.tsv_uetersen.tischtennis.database;
 
 define type(enum) Gender {
-	"MALE",
-	"FEMALE"
+	MALE,
+	FEMALE
 }
 
 define table AddressSet (addr__set) {
@@ -15,10 +15,10 @@ define table AddressSet (addr__set) {
 define table AddressLabel (addr__addr_label) {
 	primary {
 		ID (addressLabelId) AS ID = auto
-	},
+	}
 	data {
 		label AS STRING(128)
-	},
+	}
 	indices {
 		UNIQUE {label}
 	}
@@ -27,7 +27,7 @@ define table AddressLabel (addr__addr_label) {
 define table City (addr__city) {
 	primary {
 		ID (cityId) AS ID = auto
-	},
+	}
 	data {
 		postcode AS NULLABLE STRING(10) = NULL,
 		city AS STRING(255)
@@ -38,7 +38,7 @@ define table Address (addr__addr) {
 	primary {
 		Set (addressSetId) AS REFERENCE(AddressSet),
 		Label (addressLabelId) AS REFERENCE(AddressLabel)
-	},
+	}
 	data {
 		street[2] AS NULLABLE STRING(255) = NULL,
 		city (cityId) AS NULLABLE REFERENCE(City) = NULL
@@ -46,18 +46,18 @@ define table Address (addr__addr) {
 }
 
 define table Person (base__person) {
-	brief { Saves all basic personal information related to a person. },
+	brief { Saves all basic personal information related to a person. }
 	primary {
 		ID (personId) AS ID = auto
-	},
+	}
 	data {
 		firstname AS STRING(255),
 		secondname[3] AS NULLABLE STRING(255) = NULL,
 		lastname AS STRING(255),
 		birthdate AS NULLABLE DATE = NULL,
-		gender AS NULLABLE GENDER = NULL,
+		gender AS NULLABLE ENUM(Gender) = NULL,
 		addressSet (addressSetId) AS NULLABLE REFERENCE(AddressSet) = NULL
-	},
+	}
 	indices {
 		FULLTEXT INDEX {firstname},
 		FULLTEXT INDEX {lastname}
@@ -65,27 +65,27 @@ define table Person (base__person) {
 }
 
 define table Player (base__player) {
-	brief { Saves all players },
+	brief { Saves all players }
 	primary {
 		ID (playerId) AS REFERENCE(Person)
 	}
 }
 
 define table Gym (base__gym) {
-	brief { Saves all gyms },
+	brief { Saves all gyms }
 	primary {
 		ID (gymId) AS ID = auto
-	},
+	}
 	data {
 		name AS STRING(255)
 	}
 }
 
 define table TrainingsGroup (trn__group) {
-	brief { Defined trainings groups. },
+	brief { Defined trainings groups. }
 	primary {
 		ID (groupId) AS ID = auto
-	},
+	}
 	data {
 		title AS STRING(255),
 		description AS NULLABLE TEXT = NULL,
@@ -94,10 +94,10 @@ define table TrainingsGroup (trn__group) {
 }
 
 define table Training (trn__training) {
-	brief { Saves all training sessions },
+	brief { Saves all training sessions }
 	primary {
 		ID (trainingId) AS ID = auto
-	},
+	}
 	data {
 		dateFrom AS DATETIME,
 		dateUntil AS DATETIME,
@@ -108,7 +108,7 @@ define table Training (trn__training) {
 define table Guestbook (gb__entry) {
 	primary {
 		ID (guestbookId) AS ID = auto
-	},
+	}
 	data {
 		dateEntry (e_date) AS DATETIME,
 		authorName AS STRING(255),
@@ -116,7 +116,7 @@ define table Guestbook (gb__entry) {
 		isDeleted AS BOOLEAN = false,
 		entryTitle (e_title) AS STRING(255),
 		entryText (e_text) AS TEXT
-	},
+	}
 	indices {
 		INDEX {dateEntry}
 	}

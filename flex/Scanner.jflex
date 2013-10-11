@@ -14,14 +14,14 @@
 //
 package de.brainiiiii.sqlgen;
 
-import node.Constants;
 import java_cup.runtime.Symbol;
 
 %%
 
 %class Lexer
+%public
 %cup
-%implements sym, Constants
+%implements sym
 %line
 %column
 
@@ -40,7 +40,7 @@ import java_cup.runtime.Symbol;
   }
 %} 
 
-Ident = [a-zA-Z] [a-zA-Z0-9]*
+Ident = [a-zA-Z_] [a-zA-Z0-9_]*
 
 IntLiteral = 0 | [1-9][0-9]*
 
@@ -56,20 +56,30 @@ white_space = {new_line} | [ \t\f]
 "project"			{ return symbol(PROJECT); }
 "define"			{ return symbol(DEFINE); }
 "type"				{ return symbol(TYPE); }
-/*"int"             { return symbol(TYPE, new Integer( INTTYPE ) ); }*/
-/*"bool"            { return symbol(TYPE, new Integer( BOOLTYPE ) ); }*/
+"enum"				{ return symbol(ENUM); }
+"table"				{ return symbol(TABLE); }
+"primary"			{ return symbol(PRIMARY); }
+"data"				{ return symbol(DATA); }
+"as"				{ return symbol(AS); }
+"int"             	{ return symbol(INT); }
+"bool"            	{ return symbol(BOOL); }
 
 /* names */
-{Ident}           { return symbol(IDENT, yytext()); }
+{Ident}           	{ return symbol(IDENT, yytext()); }
   
 /* literals */
-/* {IntLiteral} { return symbol(INTCONST, new Integer(Integer.parseInt(yytext()))); } */
+ {IntLiteral} 		{ return symbol(INTCONST, new Integer(Integer.parseInt(yytext()))); } 
 
 
 
 /* separators */
-";"				  { return symbol(SC); }
-"."				  { return symbol(DOT); }
+";"				  	{ return symbol(SC); }
+"."				  	{ return symbol(DOT); }
+","					{ return symbol(COMMA); }
+"("				  	{ return symbol(LBRACE); }
+")"					{ return symbol(RBRACE); }
+"{"					{ return symbol(OPEN); }
+"}"					{ return symbol(CLOSE); }
 
 
 

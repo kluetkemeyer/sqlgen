@@ -17,14 +17,38 @@ package de.brainiiiii.sqlgen;
 
 
 
-Project ::= "String":ident ProjectDekl
-
-ProjectDekl ::= PackageDekl:pckg ProjectDeklBlock*:blocks
+Project ::= "String":ident PackageDekl:pckg ProjectDeklBlock*:blocks
 
 PackageDekl ::= "String":ident PackageDekl
-			  |  /* empty */
+		|  /* empty */
                  
-ProjectDeklBlock ::= { EnumDekl } "String":ident String*:options
-                   | { TableDekl } "String":ident "String":physicalName ColumnDekl*:primaries ColumnDekl*:cols IndexDekl*:indices
+ProjectDeklBlock ::= { EnumDekl } "String":ident "String"*:options
+		| { TableDekl } "String":ident "String":physicalName ColumnDekl*:primaries ColumnDekl*:cols IndexDekl*:indices
 			 
+ColumnDekl ::= { SingleColumnDekl } "String":ident "String":phyicalName ColumnDeklType:type DefaultValue:defaultValue
+		| { ArrayColumnDekl } "String":ident "int":arrayLength "String":phyicalName ColumnDeklType:type DefaultValue:defaultValue
 
+DefaultValue ::= { DefaultAuto }
+		| { DefaultConstNull }
+		| { DefaultConstInt } "int":value
+		| { DefaultConstString } "String":value
+		| { DefaultConstBool } "boolean":value
+
+IndexDekl ::= "boolean":isFulltext "boolean":isUnique String*:columns 
+
+ColumnDeklType ::= { NullableColumnDekl } NonNullableColumnDekl:subType
+		| { NonNullableColumnDekl }
+		
+NonNullableColumnDekl ::= { IDType }
+		| { StringType } "int":maxLength
+		| { IntType }
+		| { BooleanType }
+		| { CharType }
+		| { DoubleType }
+		| { TextType }
+		| { DateType }
+		| { DateTimeType }
+		| { TimeType }
+		| { EnumType } "String":enumName
+		| { TableReferenceType } "String":tableName
+		| { ColumnReferenceType } "String":tableName "String":columnName

@@ -26,7 +26,6 @@
 
 
 import java.io.*;
-import node.*;
 
 import de.brainiiiii.sqlgen.*;
 
@@ -66,13 +65,7 @@ public class Main {
     try {
       Parser p = new Parser(scanner);
       Object result = p.parse().value;
-      System.out.println(result.toString());
-      IdentificationVisitor identification = new IdentificationVisitor();
-      ((Prog)result).accept( identification );
-      System.out.println("Code:\n");
-      EmitCodeVisitor emitcode = new EmitCodeVisitor();
-//     ((Prog)result).accept( emitcode );
-      ((Prog)result).traverseBottomUp( emitcode );
+      System.out.println(result);
     }
     catch (java.io.IOException e) {
       System.out.println("An I/O error occured while parsing : \n"+e);

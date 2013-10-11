@@ -51,6 +51,8 @@
   />
 
   <target name="init">
+	<mkdir dir="bin" />
+	<mkdir dir="lib" />
     <mkdir dir="${classes}"/>
     <mkdir dir="${java}"/>
     <mkdir dir="${dist}"/>
@@ -98,7 +100,7 @@
 
   <target name="run" depends="dist">
     <java classname="Main" fork="true">
-      <arg value="input.test" />
+      <arg value="examples/example.sqlg" />
       <classpath refid="binaries" />
     </java>
   </target>

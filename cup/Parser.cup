@@ -18,7 +18,6 @@ package de.brainiiiii.sqlgen;
 import java.util.*;
 import java.io.*;
 import java_cup.runtime.Symbol;
-import node.*;
 
 
 /* Preliminaries to use the scanner.  */
@@ -53,28 +52,186 @@ parser code {:
 
 
 /* Terminals (tokens returned by lexer). */
-terminal			PACKAGE, PROJECT, DEFINE, TYPE, DOT, SC;
+terminal			PACKAGE, PROJECT, DEFINE, TYPE, ENUM, TABLE; 
+terminal			INDICES, DATA, PRIMARY, AS;
+terminal			UNIQUE, INDEX, FULLTEXT;
+terminal			AUTO_ID, NULL;
+terminal			NULLABLE, ID, STRING, INT, BOOL, CHAR, DOUBLE, TEXT, DATE, DATETIME, TIME, REFERENCE;
+terminal 			COMMA, EQ, DOT, SC, LBRACE, RBRACE, OPEN, CLOSE;
 terminal Integer 	INTCONST;
 terminal String  	IDENT;
+terminal Boolean	BOOLCONST;
+terminal String		STRINGCONST;
 
 
 
-non terminal Project		project;
-non terminal PackageDekl	package_dekl;
-non terminal PackageDekl	package_path;
+non terminal Project				project;
+non terminal PackageDekl			package_dekl;
+non terminal PackageDekl			package_path;
+non terminal ColumnDekl 			column_dekl;
+non terminal ColumnDeklList			column_dekl_list;
+non terminal String 				optionalBracedIdent;
+non terminal DefaultValue			default_value;
+non terminal ColumnDeklType			column_type_dekl;
+non terminal NonNullableColumnDekl 	nonnullable_column_dekl;
+non terminal EnumDekl 				enum_dekl;
+non terminal StringList				string_list;
+non terminal StringList				ident_list;
+non terminal ProjectDeklBlock		block;
+non terminal ProjectDeklBlockList	blockList;
+non terminal TableDekl 				tableDekl;
+non terminal ColumnDeklList 		tableDekl_primary;
+non terminal ColumnDeklList 		tableDekl_data;
+non terminal IndexDeklList 			tableDekl_indices;
+non terminal IndexDekl 				index_dekl;
+non terminal IndexDeklList			index_dekl_list;
 
 
 
-project ::= PROJECT IDENT:i package_dekl:p
-                    {: RESULT = new Project(i,p); :};
+project ::= 
+				PROJECT IDENT:i SC package_dekl:p blockList:l
+                    {: RESULT = new Project(i,p, l); :};
+                    
+ident_list ::=
+				IDENT:e COMMA ident_list:l
+					{: RESULT = l.append(e); :}
+			|	IDENT:e
+					{: RESULT = new StringList(e); :};
 
-package_dekl ::= PACKAGE IDENT:r package_path:p SC
-					{: RESULT = new PackageDekl(r, p); :}
+package_dekl ::= 
+				PACKAGE IDENT:r package_path:p SC
+					{: RESULT = new PackageDekl0(r, p); :}
 			|	
-					{: RESULT = new PackageDekl(); :};
+					{: RESULT = new PackageDekl1(); :};
 
-package_path ::= DOT IDENT:s package_path:p
-					{: RESULT = new PackageDekl(s, p); :}
+package_path ::= 
+				DOT IDENT:s package_path:p
+					{: RESULT = new PackageDekl0(s, p); :}
 			|	 
-					{: RESULT = new PackageDekl(); :};
+					{: RESULT = new PackageDekl1(); :};
 	
+column_dekl ::=
+				IDENT:s optionalBracedIdent:p AS column_type_dekl:t default_value:d
+					{: RESULT = new SingleColumnDekl(s, p, t, d); :};
+					
+column_dekl_list ::= 
+				column_dekl_list:l column_dekl:e
+					{: RESULT = l.append(e); :}
+			|	column_dekl:e
+					{: RESULT = new ColumnDeklList(e); :};
+				
+optionalBracedIdent ::=
+				LBRACE IDENT:s RBRACE
+					{: RESULT = s; :}
+			|
+					{: RESULT = null; :};
+					
+default_value ::=
+				EQ AUTO_ID
+					{: RESULT = new DefaultAuto(); :}
+			|	EQ NULL
+					{: RESULT = new DefaultConstNull(); :}
+			| 	EQ INTCONST:v
+					{: RESULT = new DefaultConstInt(v); :}
+			|	EQ STRINGCONST:v
+					{: RESULT = new DefaultConstString(v); :}
+			|	EQ BOOLCONST:v
+					{: RESULT = new DefaultConstBool(v); :}
+			|	
+					{: RESULT = null; :};
+					
+column_type_dekl ::= 
+				NULLABLE nonnullable_column_dekl:r
+					{: RESULT = new NullableColumnDekl(r); :}
+			|	nonnullable_column_dekl:r
+					{: RESULT = r; :};
+					
+nonnullable_column_dekl ::=
+				STRING LBRACE INTCONST:l RBRACE
+					{: RESULT = new StringType(l); :}
+			|	DATE
+					{: RESULT = new DateType(); :}
+			|	TIME
+					{: RESULT = new TimeType(); :}
+			|	DATETIME
+					{: RESULT = new DateTimeType(); :}
+			|	INT
+					{: RESULT = new IntType(); :}
+			|	BOOL
+					{: RESULT = new BooleanType(); :}
+			|	CHAR
+					{: RESULT = new CharType(); :}
+			|	TEXT
+					{: RESULT = new TextType(); :}
+			|	ID
+					{: RESULT = new IDType(); :}
+			|	DOUBLE
+					{: RESULT = new DoubleType(); :}
+			| 	ENUM LBRACE IDENT:s RBRACE
+					{: RESULT = new EnumType(s); :}
+			|	REFERENCE LBRACE IDENT:t RBRACE
+					{: RESULT = new TableReferenceType(t); :}
+			|	REFERENCE LBRACE IDENT:t DOT IDENT:c RBRACE
+					{: RESULT = new ColumnReferenceType(t, c); :};
+
+enum_dekl ::=
+				DEFINE TYPE LBRACE ENUM RBRACE IDENT:s OPEN ident_list:o CLOSE
+					{: RESULT = new EnumDekl(s, o); :};
+					
+string_list ::=
+				string_list:l COMMA IDENT:s
+					{: RESULT = l.append(s); :}
+			|	
+					{: RESULT = new StringList(); :};
+					
+
+block ::=
+				enum_dekl:d
+					{: RESULT = d; :}
+			|	tableDekl:d
+					{: RESULT = d; :};
+					
+blockList ::=
+				block:b blockList:l
+					{: RESULT = l.append(b); :}
+			|	block:b
+					{: RESULT = new ProjectDeklBlockList(b); :};
+					
+tableDekl ::= DEFINE TABLE IDENT:n optionalBracedIdent:p OPEN tableDekl_primary:prim tableDekl_data:data tableDekl_indices:ind CLOSE
+					{: RESULT = new TableDekl(n, p, prim, data, ind); :};
+
+                    
+tableDekl_primary ::=
+				PRIMARY OPEN column_dekl_list:l CLOSE
+					{: RESULT = l; :}
+			|	
+					{: RESULT = new ColumnDeklList(); :};
+                    
+tableDekl_data ::=
+				DATA OPEN column_dekl_list:l CLOSE
+					{: RESULT = l; :}
+			|	
+					{: RESULT = new ColumnDeklList(); :};
+					
+tableDekl_indices ::=
+				INDICES OPEN index_dekl_list:l CLOSE
+					{: RESULT = l; :}
+			|
+					{: RESULT = new IndexDeklList(); :};
+					
+index_dekl_list ::=
+				index_dekl_list:l COMMA index_dekl:e
+					{: RESULT = l.append(e); :}
+			|
+					{: RESULT = new IndexDeklList(); :};
+					
+index_dekl ::=
+				FULLTEXT INDEX OPEN string_list:l CLOSE
+					{: RESULT = new IndexDekl(true, false, l); :}
+			|	INDEX OPEN string_list:l CLOSE
+					{: RESULT = new IndexDekl(false, false, l); :}
+			|	FULLTEXT UNIQUE OPEN string_list:l CLOSE
+					{: RESULT = new IndexDekl(true, true, l); :}
+			|	UNIQUE OPEN string_list:l CLOSE
+					{: RESULT = new IndexDekl(false, true, l); :};
+
