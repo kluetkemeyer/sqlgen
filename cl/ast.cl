@@ -58,12 +58,15 @@ NonNullableColumnDekl ::= { IDType }
 SqlExpr ::= {SqlColumnExpr} "String":tableName "String":columnName
 		| {SqlConstStringExpr} "String":value
 		| {SqlParamExpr} "String":name
+		| {SqlNullExpr} 
+		| {SqlConstBoolExpr} "boolean": value
 
 SqlSelectSource ::= {SqlTableSelectSource} "String":tableName "String":alias "boolean":isOptional
 
 SqlSelectColumn ::= SqlExpr:expr "String":alias
 
-SqlLimit ::= SqlExpr:offset SqlExpr:limit
+SqlLimit ::= {SqlSpecLimit} SqlExpr:offset SqlExpr:limit
+		| {SqlNoLimit}
 
 SqlOrderElement ::= SqlColumnExpr:column "boolean":ascending
 

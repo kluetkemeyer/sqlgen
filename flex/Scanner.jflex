@@ -86,6 +86,16 @@ white_space = {new_line} | [ \t\f]
 "TRUE"				{ return symbol(BOOLCONST, new Boolean(true)); }
 "FALSE"				{ return symbol(BOOLCONST, new Boolean(false)); }
 
+
+/* SQL Tokens */
+"SELECT"			{ return symbol(SQL_SELECT); }
+"FROM"				{ return symbol(SQL_FROM); }
+"WHERE"				{ return symbol(SQL_WHERE); }
+"ORDER BY"			{ return symbol(SQL_ORDER); }
+"LIMIT"				{ return symbol(SQL_LIMIT); }
+"ASC"				{ return symbol(SQL_ASC); }
+"DESC"				{ return symbol(SQL_DESC); }
+
 /* names */
 {Ident}           	{ return symbol(IDENT, yytext()); }
   
@@ -105,13 +115,6 @@ white_space = {new_line} | [ \t\f]
 "="					{ return symbol(EQ); }
 "["					{ return symbol(OLBRACE); }
 "]"					{ return symbol(ORBRACE); }
-
-/* SQL Tokens */
-"SELECT"			{ return symbol(SQL_SELECT); }
-"FROM"				{ return symbol(SQL_FROM); }
-"WHERE"				{ return symbol(SQL_WHERE); }
-"ORDER BY"			{ return symbol(SQL_ORDER); }
-"LIMIT"				{ return symbol(SQL_LIMIT); }
 
 
 {white_space}     { /* ignore */ }

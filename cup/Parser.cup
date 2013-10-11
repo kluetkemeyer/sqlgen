@@ -92,19 +92,21 @@ non terminal ColumnDeklList			optionalParamList;
 
 
 terminal SQL_SELECT, SQL_FROM, SQL_WHERE, SQL_ORDER, SQL_LIMIT;
+terminal SQL_ASC, SQL_DESC;
 
 non terminal SqlSelect				sqlSelect;
 non terminal SqlExpr				sqlSelect_where;
 non terminal SqlSelectSourceList	sqlSelect_from;
-non terminal SqlSqlOrderElementList sqlSelect_order;
+non terminal SqlOrderElement	 	sqlSelect_order;
 non terminal SqlLimit				sqlSelect_limit;
 non terminal SqlSelectColumn		sqlSelectColumn;
 non terminal SqlSelectColumnList	sqlSelectColumnList;
 non terminal SqlExpr				sqlExpression;
+non terminal SqlColumnExpr			sqlColumnExpr;
 non terminal SqlSelectSourceList	sqlSelectSourceList;
 non terminal SqlSelectSource		sqlSelectSource;
-non terminal SqlSqlOrderElementList sqlSelectOrderElementList;
-non terminal SqlSqlOrderElement	 	sqlSelectOrderElement;
+non terminal SqlOrderElementList 	sqlSelectOrderElementList;
+non terminal SqlOrderElement	 	sqlSelectOrderElement;
 
 
 
@@ -146,9 +148,9 @@ optionalParamList ::=
 				LBRACE column_dekl_list:l RBRACE
 					{: RESULT = l; :}
 			|	LBRACE RBRACE
-					{: RESULT = new ColumnDeklList(); }
+					{: RESULT = new ColumnDeklList(); :}
 			|
-					{: RESULT = new ColumnDeklList(); };
+					{: RESULT = new ColumnDeklList(); :};
 				
 optionalBracedIdent ::=
 				LBRACE IDENT:s RBRACE
@@ -280,19 +282,27 @@ sqlSelect_from ::=
 				SQL_FROM sqlSelectSourceList:l
 					{: RESULT = l; :}
 			|	
-					{: RESULT = null; :};
+					{: RESULT = new SqlSelectSourceList(); :};
 				
 sqlSelect_where ::=
 				SQL_WHERE sqlExpression:e
 					{: RESULT = e; :}
 			|
-					{: RESULT = null; :};
+					{: RESULT = new SqlConstBoolExpr(true); :};
 
 sqlSelect_limit ::= 
-				SQL_LIMIT INTCONST:o COMMA INTCONST:l
-					{: RESULT = new SqlLimit(o, l); :}
+				SQL_LIMIT sqlExpression:o COMMA sqlExpression:l
+					{: RESULT = new SqlSpecLimit(o, l); :}
 			|	
-					{: RESULT = null; :};
+					{: RESULT = new SqlNoLimit(); :};
+					
+sqlSelect_order ::=
+				SQL_ORDER sqlSelectOrderElementList:l
+					{: RESULT = l; :}
+			|
+					{: RESULT = new SqlSelectOrderElementList(); :};
+					
+
 				
 					
 					
@@ -302,15 +312,41 @@ sqlSelectColumnList ::=
 			|	sqlSelectColumn:c
 					{: RESULT = new SqlSelectColumnList(c); :};
 					
+sqlSelectOrderElementList ::= 
+				sqlSelectOrderElementList:l COMMA sqlSelectOrderElement:c
+					{: RESULT = l.append(c); :}
+			|	sqlSelectOrderElement:c
+					{: RESULT = new SqlOrderElementList(c); :};
+					
+sqlSelectSourceList ::= 
+				sqlSelectSourceList:l COMMA sqlSelectSource:c
+					{: RESULT = l.append(c); :}
+			|	sqlSelectSource:c
+					{: RESULT = new SqlSelectSourceList(c); :};
+					
 sqlSelectColumn ::=
-				sqlExpression:e AS Ident:s
+				sqlExpression:e AS IDENT:s
 					{: RESULT = new SqlSelectColumn(e, s); :}
 			|	sqlExpression:e
-					{: RESULT = new SqlSelectColumn(e, null); :}
-				
+					{: RESULT = new SqlSelectColumn(e, null); :};
 					
+sqlSelectOrderElement ::=
+				sqlColumnExpr:c SQL_ASC
+					{: RESULT = new SqlSelectOrderElement(c, true); :}
+			|	sqlColumnExpr:c SQL_DESC
+					{: RESULT = new SqlSelectOrderElement(c, false); :};
+				
+sqlExpression ::=
+				NULL
+					{: RESULT = new SqlNullExpr(); :}
+			|	sqlColumnExpr:e
+					{: RESULT = e; :};
 
-non terminal SqlSqlOrderElementList sqlSelect_order;
-non terminal SqlExpr				sqlExpression;
-non terminal SqlSelectSourceList	sqlSelectSourceList;
-non terminal SqlSelectSource		sqlSelectSource;
+sqlSelectSource ::=
+				IDENT:n AS IDENT:a
+					{: RESULT = new SqlTableSelectSource(n, a, false); :};
+
+sqlColumnExpr ::= 
+				IDENT:t DOT IDENT:c
+					{: RESULT = new SqlColumnExpr(t, c); :};
+	
