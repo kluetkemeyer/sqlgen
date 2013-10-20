@@ -5,9 +5,12 @@
   <property name="src"     location="src"     />
   <property name="java"    location="java"    />
   <property name="classes" location="classes" />
+  <property name="tclasses" location="tclasses" />
   <property name="dist"    location="dist"    />
   <property name="lib"     location="lib"     />
   <property name="bin"     location="bin"     />
+  <property name="test"	   location="tests"   />
+    <property name="report"  location="reports"/>
   <property environment="env" />
 
   <!-- We rely on CUP-10k-TUM, JFlex 1.3.5 and Classgen 1.5pre -->
@@ -34,6 +37,36 @@
     <fileset dir="${env.CCK_HOME}/lib" includes="**/*.jar" />
     <pathelement path="${java.class.path}" />
   </path>
+  
+  <path id="test_binaries">
+    <pathelement location="${bin}" />
+    <fileset dir="${bin}">
+      <include name="**/*.jar" />
+      <include name="**/*.zip" />
+    </fileset>
+    <pathelement location="${lib}" />
+    <fileset dir="${lib}">
+      <include name="**/*.jar" />
+      <include name="**/*.zip" />
+    </fileset>
+    <!-- When the user installed CCK, we use these tool directories -->
+    <fileset dir="${env.CCK_HOME}/lib" includes="**/*.jar" />
+    <pathelement path="${java.class.path}" />
+    <pathelement path="${classes}" />
+    <pathelement path="${tclasses}" />
+  </path>
+  
+  <path id="test_libraries">
+    <pathelement location="${lib}" />
+    <fileset dir="${lib}">
+      <include name="**/*.jar" />
+      <include name="**/*.zip" />
+    </fileset>
+    <!-- When the user installed CCK, we use these lib directories -->
+    <fileset dir="${env.CCK_HOME}/lib" includes="**/*.jar" />
+    <pathelement path="${java.class.path}" />
+    <pathelement path="${classes}" />
+  </path>
 
   <taskdef name="jflex" 
            classname="JFlex.anttask.JFlexTask" 
@@ -56,6 +89,8 @@
     <mkdir dir="${classes}"/>
     <mkdir dir="${java}"/>
     <mkdir dir="${dist}"/>
+    <mkdir dir="${tclasses}"/>
+    <mkdir dir="${report}" />
   </target>
 
   <target name="classgen" depends="init">
@@ -85,8 +120,14 @@
   </target>
 
   <target name="compile" depends="copy_src">
-    <javac srcdir="${java}" destdir="${classes}">
+    <javac srcdir="${java}" destdir="${classes}" includeantruntime="true">
       <classpath refid="libraries" />
+    </javac>
+  </target>
+  
+  <target name="compileTest" depends="compile">
+    <javac srcdir="${test}" destdir="${tclasses}" includeantruntime="true">
+      <classpath refid="test_libraries" />
     </javac>
   </target>
 
@@ -108,6 +149,26 @@
   <target name="clean">
     <delete dir="${java}" />
     <delete dir="${classes}" />
+    <delete dir="${tclasses}" />
     <delete dir="${dist}" />
+    <delete dir="${report}" />
+  </target>
+  
+  <target name="junit" depends="compileTest">
+	<junit printsummary="yes">
+      <classpath refid="test_binaries" />
+            <formatter type="xml"/>
+            <batchtest todir="${report}">
+                <fileset dir="${tclasses}" includes="**/Test*.class" />
+            </batchtest>
+	</junit>
+  </target>
+  
+  <target name="test" depends="junit">
+  
+        <junitreport todir="${report}">
+            <fileset dir="${report}" includes="TEST-*.xml"/>
+            <report todir="${report}"/>
+        </junitreport>
   </target>
 </project>
