@@ -1,0 +1,352 @@
+// Technische Universitaet Muenchen 
+// Fakultaet fuer Informatik 
+// Riitta Hoellerer
+//
+// Praktikum des Uebersetzerbaus
+// SS 2001
+//
+// mimalex.flex
+// JFlex lexer specification for Mima
+//  
+// JFlex - The Fast Scanner Generator for Java
+//  home page: 
+// /usr/proj/uebbau/JFlex/
+//
+package de.brainiiiii.sqlgen;
+
+import java_cup.runtime.Symbol;
+
+%%
+
+%class Lexer
+%public
+%cup
+%implements sym
+%line
+%column
+
+%{
+
+  private Symbol symbol(int sym) {
+    return new Symbol(sym, yyline+1, yycolumn+1);
+  }
+  
+  private Symbol symbol(int sym, Object val) {
+    return new Symbol(sym, yyline+1, yycolumn+1, val);
+  }
+  
+  private void error(String message) {
+    System.out.println("Error at line "+(yyline+1)+", column "+(yycolumn+1)+" : "+message);
+  }
+%} 
+
+Ident = [a-zA-Z_] [a-zA-Z0-9_]*
+
+IntLiteral = 0 | [1-9][0-9]*
+
+new_line = \r|\n|\r\n;
+
+white_space = {new_line} | [ \t\f]
+
+%%
+
+
+/* keywords */
+"package"			{ return symbol(PACKAGE); }
+"project"			{ return symbol(PROJECT); }
+"define"			{ return symbol(DEFINE); }
+"type"				{ return symbol(TYPE); }
+"enum"				{ return symbol(ENUM_DEF); }
+"table"				{ return symbol(TABLE); }
+"select"			{ return symbol(SELECT_DEF); }
+"primary"			{ return symbol(PRIMARY); }
+"data"				{ return symbol(DATA); }
+"indices"			{ return symbol(INDICES); }
+"AS"				{ return symbol(AS); }
+"INDEX"				{ return symbol(INDEX); }
+"FULLTEXT"			{ return symbol(FULLTEXT); }
+"UNIQUE"			{ return symbol(UNIQUE); }
+
+/* column types */
+"NULLABLE"			{ return symbol(NULLABLE); }
+"ID"				{ return symbol(ID); }
+"INTEGER"          	{ return symbol(INT); }
+"BOOLEAN"          	{ return symbol(BOOL); }
+"CHAR"          	{ return symbol(CHAR); }
+"DOUBLE"          	{ return symbol(DOUBLE); }
+"TEXT"          	{ return symbol(TEXT); }
+"DATE"          	{ return symbol(DATE); }
+"ENUM"          	{ return symbol(ENUM); }
+"DATETIME"         	{ return symbol(DATETIME); }
+"STRING"			{ return symbol(STRING); }
+"REFERENCE"			{ return symbol(REFERENCE); }
+
+/* column values */
+"auto"				{ return symbol(AUTO_ID); }
+"NULL"				{ return symbol(NULL); }
+"TRUE"				{ return symbol(BOOLCONST, new Boolean(true)); }
+"FALSE"				{ return symbol(BOOLCONST, new Boolean(false)); }
+
+
+/* SQL Tokens */
+"ACCESSIBLE"	{ return symbol(ACCESSIBLE); }
+"ADD"	{ return symbol(ADD); }
+"ALL"	{ return symbol(ALL); }
+"ALTER"	{ return symbol(ALTER); }
+"ANALYZE"	{ return symbol(ANALYZE); }
+"AND"	{ return symbol(AND); }
+"AS"	{ return symbol(AS); }
+"ASC"	{ return symbol(ASC); }
+"ASENSITIVE"	{ return symbol(ASENSITIVE); }
+"BEFORE"	{ return symbol(BEFORE); }
+"BETWEEN"	{ return symbol(BETWEEN); }
+"BIGINT"	{ return symbol(BIGINT); }
+"BINARY"	{ return symbol(BINARY); }
+"BLOB"	{ return symbol(BLOB); }
+"BOTH"	{ return symbol(BOTH); }
+"BY"	{ return symbol(BY); }
+"CALL"	{ return symbol(CALL); }
+"CASCADE"	{ return symbol(CASCADE); }
+"CASE"	{ return symbol(CASE); }
+"CHANGE"	{ return symbol(CHANGE); }
+"CHAR"	{ return symbol(CHAR); }
+"CHARACTER"	{ return symbol(CHARACTER); }
+"CHECK"	{ return symbol(CHECK); }
+"COLLATE"	{ return symbol(COLLATE); }
+"COLUMN"	{ return symbol(COLUMN); }
+"CONDITION"	{ return symbol(CONDITION); }
+"CONSTRAINT"	{ return symbol(CONSTRAINT); }
+"CONTINUE"	{ return symbol(CONTINUE); }
+"CONVERT"	{ return symbol(CONVERT); }
+"CREATE"	{ return symbol(CREATE); }
+"CROSS"	{ return symbol(CROSS); }
+"CURRENT_DATE"	{ return symbol(CURRENT_DATE); }
+"CURRENT_TIME"	{ return symbol(CURRENT_TIME); }
+"CURRENT_TIMESTAMP"	{ return symbol(CURRENT_TIMESTAMP); }
+"CURRENT_USER"	{ return symbol(CURRENT_USER); }
+"CURSOR"	{ return symbol(CURSOR); }
+"DATABASE"	{ return symbol(DATABASE); }
+"DATABASES"	{ return symbol(DATABASES); }
+"DAY_HOUR"	{ return symbol(DAY_HOUR); }
+"DAY_MICROSECOND"	{ return symbol(DAY_MICROSECOND); }
+"DAY_MINUTE"	{ return symbol(DAY_MINUTE); }
+"DAY_SECOND"	{ return symbol(DAY_SECOND); }
+"DEC"	{ return symbol(DEC); }
+"DECIMAL"	{ return symbol(DECIMAL); }
+"DECLARE"	{ return symbol(DECLARE); }
+"DEFAULT"	{ return symbol(DEFAULT); }
+"DELAYED"	{ return symbol(DELAYED); }
+"DELETE"	{ return symbol(DELETE); }
+"DESC"	{ return symbol(DESC); }
+"DESCRIBE"	{ return symbol(DESCRIBE); }
+"DETERMINISTIC"	{ return symbol(DETERMINISTIC); }
+"DISTINCT"	{ return symbol(DISTINCT); }
+"DISTINCTROW"	{ return symbol(DISTINCTROW); }
+"DIV"	{ return symbol(DIV); }
+"DOUBLE"	{ return symbol(DOUBLE); }
+"DROP"	{ return symbol(DROP); }
+"DUAL"	{ return symbol(DUAL); }
+"EACH"	{ return symbol(EACH); }
+"ELSE"	{ return symbol(ELSE); }
+"ELSEIF"	{ return symbol(ELSEIF); }
+"ENCLOSED"	{ return symbol(ENCLOSED); }
+"ESCAPED"	{ return symbol(ESCAPED); }
+"EXISTS"	{ return symbol(EXISTS); }
+"EXIT"	{ return symbol(EXIT); }
+"EXPLAIN"	{ return symbol(EXPLAIN); }
+"FALSE"	{ return symbol(FALSE); }
+"FETCH"	{ return symbol(FETCH); }
+"FLOAT"	{ return symbol(FLOAT); }
+"FLOAT4"	{ return symbol(FLOAT4); }
+"FLOAT8"	{ return symbol(FLOAT8); }
+"FOR"	{ return symbol(FOR); }
+"FORCE"	{ return symbol(FORCE); }
+"FOREIGN"	{ return symbol(FOREIGN); }
+"FROM"	{ return symbol(FROM); }
+"FULLTEXT"	{ return symbol(FULLTEXT); }
+"GET"	{ return symbol(GET); }
+"GRANT"	{ return symbol(GRANT); }
+"GROUP"	{ return symbol(GROUP); }
+"HAVING"	{ return symbol(HAVING); }
+"HIGH_PRIORITY"	{ return symbol(HIGH_PRIORITY); }
+"HOUR_MICROSECOND"	{ return symbol(HOUR_MICROSECOND); }
+"HOUR_MINUTE"	{ return symbol(HOUR_MINUTE); }
+"HOUR_SECOND"	{ return symbol(HOUR_SECOND); }
+"IF"	{ return symbol(IF); }
+"IGNORE"	{ return symbol(IGNORE); }
+"IN"	{ return symbol(IN); }
+"INDEX"	{ return symbol(INDEX); }
+"INFILE"	{ return symbol(INFILE); }
+"INNER"	{ return symbol(INNER); }
+"INOUT"	{ return symbol(INOUT); }
+"INSENSITIVE"	{ return symbol(INSENSITIVE); }
+"INSERT"	{ return symbol(INSERT); }
+"INT"	{ return symbol(INT); }
+"INT1"	{ return symbol(INT1); }
+"INT2"	{ return symbol(INT2); }
+"INT3"	{ return symbol(INT3); }
+"INT4"	{ return symbol(INT4); }
+"INT8"	{ return symbol(INT8); }
+"INTEGER"	{ return symbol(INTEGER); }
+"INTERVAL"	{ return symbol(INTERVAL); }
+"INTO"	{ return symbol(INTO); }
+"IO_AFTER_GTIDS"	{ return symbol(IO_AFTER_GTIDS); }
+"IO_BEFORE_GTIDS"	{ return symbol(IO_BEFORE_GTIDS); }
+"IS"	{ return symbol(IS); }
+"ITERATE"	{ return symbol(ITERATE); }
+"JOIN"	{ return symbol(JOIN); }
+"KEY"	{ return symbol(KEY); }
+"KEYS"	{ return symbol(KEYS); }
+"KILL"	{ return symbol(KILL); }
+"LEADING"	{ return symbol(LEADING); }
+"LEAVE"	{ return symbol(LEAVE); }
+"LEFT"	{ return symbol(LEFT); }
+"LIKE"	{ return symbol(LIKE); }
+"LIMIT"	{ return symbol(LIMIT); }
+"LINEAR"	{ return symbol(LINEAR); }
+"LINES"	{ return symbol(LINES); }
+"LOAD"	{ return symbol(LOAD); }
+"LOCALTIME"	{ return symbol(LOCALTIME); }
+"LOCALTIMESTAMP"	{ return symbol(LOCALTIMESTAMP); }
+"LOCK"	{ return symbol(LOCK); }
+"LONG"	{ return symbol(LONG); }
+"LONGBLOB"	{ return symbol(LONGBLOB); }
+"LONGTEXT"	{ return symbol(LONGTEXT); }
+"LOOP"	{ return symbol(LOOP); }
+"LOW_PRIORITY"	{ return symbol(LOW_PRIORITY); }
+"MASTER_BIND"	{ return symbol(MASTER_BIND); }
+"MASTER_SSL_VERIFY_SERVER_CERT"	{ return symbol(MASTER_SSL_VERIFY_SERVER_CERT); }
+"MATCH"	{ return symbol(MATCH); }
+"MAXVALUE"	{ return symbol(MAXVALUE); }
+"MEDIUMBLOB"	{ return symbol(MEDIUMBLOB); }
+"MEDIUMINT"	{ return symbol(MEDIUMINT); }
+"MEDIUMTEXT"	{ return symbol(MEDIUMTEXT); }
+"MIDDLEINT"	{ return symbol(MIDDLEINT); }
+"MINUTE_MICROSECOND"	{ return symbol(MINUTE_MICROSECOND); }
+"MINUTE_SECOND"	{ return symbol(MINUTE_SECOND); }
+"MOD"	{ return symbol(MOD); }
+"MODIFIES"	{ return symbol(MODIFIES); }
+"NATURAL"	{ return symbol(NATURAL); }
+"NOT"	{ return symbol(NOT); }
+"NO_WRITE_TO_BINLOG"	{ return symbol(NO_WRITE_TO_BINLOG); }
+"NULL"	{ return symbol(NULL); }
+"NUMERIC"	{ return symbol(NUMERIC); }
+"ON"	{ return symbol(ON); }
+"OPTIMIZE"	{ return symbol(OPTIMIZE); }
+"OPTION"	{ return symbol(OPTION); }
+"OPTIONALLY"	{ return symbol(OPTIONALLY); }
+"OR"	{ return symbol(OR); }
+"ORDER"	{ return symbol(ORDER); }
+"OUT"	{ return symbol(OUT); }
+"OUTER"	{ return symbol(OUTER); }
+"OUTFILE"	{ return symbol(OUTFILE); }
+"PARTITION"	{ return symbol(PARTITION); }
+"PRECISION"	{ return symbol(PRECISION); }
+"PRIMARY"	{ return symbol(PRIMARY); }
+"PROCEDURE"	{ return symbol(PROCEDURE); }
+"PURGE"	{ return symbol(PURGE); }
+"RANGE"	{ return symbol(RANGE); }
+"READ"	{ return symbol(READ); }
+"READS"	{ return symbol(READS); }
+"READ_WRITE"	{ return symbol(READ_WRITE); }
+"REAL"	{ return symbol(REAL); }
+"REFERENCES"	{ return symbol(REFERENCES); }
+"REGEXP"	{ return symbol(REGEXP); }
+"RELEASE"	{ return symbol(RELEASE); }
+"RENAME"	{ return symbol(RENAME); }
+"REPEAT"	{ return symbol(REPEAT); }
+"REPLACE"	{ return symbol(REPLACE); }
+"REQUIRE"	{ return symbol(REQUIRE); }
+"RESIGNAL"	{ return symbol(RESIGNAL); }
+"RESTRICT"	{ return symbol(RESTRICT); }
+"RETURN"	{ return symbol(RETURN); }
+"REVOKE"	{ return symbol(REVOKE); }
+"RIGHT"	{ return symbol(RIGHT); }
+"RLIKE"	{ return symbol(RLIKE); }
+"SCHEMA"	{ return symbol(SCHEMA); }
+"SCHEMAS"	{ return symbol(SCHEMAS); }
+"SECOND_MICROSECOND"	{ return symbol(SECOND_MICROSECOND); }
+"SELECT"	{ return symbol(SELECT); }
+"SENSITIVE"	{ return symbol(SENSITIVE); }
+"SEPARATOR"	{ return symbol(SEPARATOR); }
+"SET"	{ return symbol(SET); }
+"SHOW"	{ return symbol(SHOW); }
+"SIGNAL"	{ return symbol(SIGNAL); }
+"SMALLINT"	{ return symbol(SMALLINT); }
+"SPATIAL"	{ return symbol(SPATIAL); }
+"SPECIFIC"	{ return symbol(SPECIFIC); }
+"SQL"	{ return symbol(SQL); }
+"SQLEXCEPTION"	{ return symbol(SQLEXCEPTION); }
+"SQLSTATE"	{ return symbol(SQLSTATE); }
+"SQLWARNING"	{ return symbol(SQLWARNING); }
+"SQL_BIG_RESULT"	{ return symbol(SQL_BIG_RESULT); }
+"SQL_CALC_FOUND_ROWS"	{ return symbol(SQL_CALC_FOUND_ROWS); }
+"SQL_SMALL_RESULT"	{ return symbol(SQL_SMALL_RESULT); }
+"SSL"	{ return symbol(SSL); }
+"STARTING"	{ return symbol(STARTING); }
+"STRAIGHT_JOIN"	{ return symbol(STRAIGHT_JOIN); }
+"TABLE"	{ return symbol(TABLE); }
+"TERMINATED"	{ return symbol(TERMINATED); }
+"THEN"	{ return symbol(THEN); }
+"TINYBLOB"	{ return symbol(TINYBLOB); }
+"TINYINT"	{ return symbol(TINYINT); }
+"TINYTEXT"	{ return symbol(TINYTEXT); }
+"TO"	{ return symbol(TO); }
+"TRAILING"	{ return symbol(TRAILING); }
+"TRIGGER"	{ return symbol(TRIGGER); }
+"TRUE"	{ return symbol(TRUE); }
+"UNDO"	{ return symbol(UNDO); }
+"UNION"	{ return symbol(UNION); }
+"UNIQUE"	{ return symbol(UNIQUE); }
+"UNLOCK"	{ return symbol(UNLOCK); }
+"UNSIGNED"	{ return symbol(UNSIGNED); }
+"UPDATE"	{ return symbol(UPDATE); }
+"USAGE"	{ return symbol(USAGE); }
+"USE"	{ return symbol(USE); }
+"USING"	{ return symbol(USING); }
+"UTC_DATE"	{ return symbol(UTC_DATE); }
+"UTC_TIME"	{ return symbol(UTC_TIME); }
+"UTC_TIMESTAMP"	{ return symbol(UTC_TIMESTAMP); }
+"VALUES"	{ return symbol(VALUES); }
+"VARBINARY"	{ return symbol(VARBINARY); }
+"VARCHAR"	{ return symbol(VARCHAR); }
+"VARCHARACTER"	{ return symbol(VARCHARACTER); }
+"VARYING"	{ return symbol(VARYING); }
+"WHEN"	{ return symbol(WHEN); }
+"WHERE"	{ return symbol(WHERE); }
+"WHILE"	{ return symbol(WHILE); }
+"WITH"	{ return symbol(WITH); }
+"WRITE"	{ return symbol(WRITE); }
+"XOR"	{ return symbol(XOR); }
+"YEAR_MONTH"	{ return symbol(YEAR_MONTH); }
+"ZEROFILL"	{ return symbol(ZEROFILL); }
+
+
+/* names */
+{Ident}           	{ return symbol(IDENT, yytext()); }
+  
+/* literals */
+ {IntLiteral} 		{ return symbol(INTCONST, new Integer(Integer.parseInt(yytext()))); } 
+
+
+
+/* separators */
+";"				  	{ return symbol(SC); }
+"."				  	{ return symbol(DOT); }
+","					{ return symbol(COMMA); }
+"("				  	{ return symbol(LBRACE); }
+")"					{ return symbol(RBRACE); }
+"{"					{ return symbol(OPEN); }
+"}"					{ return symbol(CLOSE); }
+"="					{ return symbol(EQ); }
+"["					{ return symbol(OLBRACE); }
+"]"					{ return symbol(ORBRACE); }
+
+
+{white_space}     { /* ignore */ }
+
+
+/* error fallback */
+.|\n              {  /* throw new Error("Illegal character <"+ yytext()+">");*/
+		    error("Illegal character <"+ yytext()+">");
+                  }

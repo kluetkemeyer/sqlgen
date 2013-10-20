@@ -1,0 +1,585 @@
+// Technische Universitaet Muenchen 
+// Fakultaet fuer Informatik 
+// Riitta Hoellerer
+//
+// Praktikum des Uebersetzerbaus
+// SS 2001
+//
+// mimasyntax.cup
+// Cup specification for Mima 
+//  
+// CUP - LALR Parser Generator for Java
+// home page: 
+// /usr/proj/uebbau/CUP/
+//
+//
+package de.brainiiiii.sqlgen;
+
+import java.util.*;
+import java.io.*;
+import java_cup.runtime.Symbol;
+
+
+/* Preliminaries to use the scanner.  */
+scan with {: return lexer.next_token(); :};
+
+
+parser code {: 
+  public boolean syntaxErrors;
+
+
+  Lexer lexer;
+
+  public Parser(Lexer lex) {
+    lexer = lex;
+  }
+
+  
+  public void report_error(String message, Object info) {
+    syntaxErrors = true;
+    
+    System.out.print(message);
+    
+    if ( !(info instanceof Symbol) ) return;
+    Symbol symbol = (Symbol) info;
+    
+    if ( symbol.left < 0 || symbol.right < 0 ) return;
+    
+    System.out.println(" at line "+symbol.left+", column "+symbol.right);
+  }
+:}; 
+
+
+
+/* Terminals (tokens returned by lexer). */
+terminal			PACKAGE, PROJECT, DEFINE, TYPE, ENUM_DEF, TABLE; 
+terminal 			SELECT_DEF;
+terminal			INDICES, DATA, PRIMARY, AS;
+terminal			UNIQUE, INDEX, FULLTEXT;
+terminal			AUTO_ID, NULL;
+terminal			NULLABLE, ID, STRING, INT, BOOL, CHAR, DOUBLE, TEXT, DATE, DATETIME, TIME, ENUM, REFERENCE;
+terminal 			COMMA, EQ, DOT, SC, LBRACE, RBRACE, OPEN, CLOSE, OLBRACE, ORBRACE;
+terminal Integer 	INTCONST;
+terminal String  	IDENT;
+terminal Boolean	BOOLCONST;
+terminal String		STRINGCONST;
+
+
+
+non terminal Project				project;
+non terminal PackageDekl			package_dekl;
+non terminal PackageDekl			package_path;
+non terminal ColumnDekl 			column_dekl;
+non terminal ColumnDeklList			column_dekl_list;
+non terminal String 				optionalBracedIdent;
+non terminal DefaultValue			default_value;
+non terminal ColumnDeklType			column_type_dekl;
+non terminal NonNullableColumnDekl 	nonnullable_column_dekl;
+non terminal EnumDekl 				enum_dekl;
+non terminal StringList				string_list;
+non terminal StringList				ident_list;
+non terminal ProjectDeklBlock		block;
+non terminal ProjectDeklBlockList	blockList;
+non terminal TableDekl 				tableDekl;
+non terminal ColumnDeklList 		tableDekl_primary;
+non terminal ColumnDeklList 		tableDekl_data;
+non terminal IndexDeklList 			tableDekl_indices;
+non terminal IndexDekl 				index_dekl;
+non terminal IndexDeklList			index_dekl_list;
+non terminal SelectDekl				selectDekl;
+non terminal ColumnDeklList			optionalParamList;
+non terminal ParamType				paramType;
+non terminal ConcreteParamType		concreteParamType;
+
+terminal SQL_ACCESSIBLE;
+terminal SQL_ADD;
+terminal SQL_ALL;
+terminal SQL_ALTER;
+terminal SQL_ANALYZE;
+terminal SQL_AND;
+terminal SQL_AS;
+terminal SQL_ASC;
+terminal SQL_ASENSITIVE;
+terminal SQL_BEFORE;
+terminal SQL_BETWEEN;
+terminal SQL_BIGINT;
+terminal SQL_BINARY;
+terminal SQL_BLOB;
+terminal SQL_BOTH;
+terminal SQL_BY;
+terminal SQL_CALL;
+terminal SQL_CASCADE;
+terminal SQL_CASE;
+terminal SQL_CHANGE;
+terminal SQL_CHAR;
+terminal SQL_CHARACTER;
+terminal SQL_CHECK;
+terminal SQL_COLLATE;
+terminal SQL_COLUMN;
+terminal SQL_CONDITION;
+terminal SQL_CONSTRAINT;
+terminal SQL_CONTINUE;
+terminal SQL_CONVERT;
+terminal SQL_CREATE;
+terminal SQL_CROSS;
+terminal SQL_CURRENT_DATE;
+terminal SQL_CURRENT_TIME;
+terminal SQL_CURRENT_TIMESTAMP;
+terminal SQL_CURRENT_USER;
+terminal SQL_CURSOR;
+terminal SQL_DATABASE;
+terminal SQL_DATABASES;
+terminal SQL_DAY_HOUR;
+terminal SQL_DAY_MICROSECOND;
+terminal SQL_DAY_MINUTE;
+terminal SQL_DAY_SECOND;
+terminal SQL_DEC;
+terminal SQL_DECIMAL;
+terminal SQL_DECLARE;
+terminal SQL_DEFAULT;
+terminal SQL_DELAYED;
+terminal SQL_DELETE;
+terminal SQL_DESC;
+terminal SQL_DESCRIBE;
+terminal SQL_DETERMINISTIC;
+terminal SQL_DISTINCT;
+terminal SQL_DISTINCTROW;
+terminal SQL_DIV;
+terminal SQL_DOUBLE;
+terminal SQL_DROP;
+terminal SQL_DUAL;
+terminal SQL_EACH;
+terminal SQL_ELSE;
+terminal SQL_ELSEIF;
+terminal SQL_ENCLOSED;
+terminal SQL_ESCAPED;
+terminal SQL_EXISTS;
+terminal SQL_EXIT;
+terminal SQL_EXPLAIN;
+terminal SQL_FALSE;
+terminal SQL_FETCH;
+terminal SQL_FLOAT;
+terminal SQL_FLOAT4;
+terminal SQL_FLOAT8;
+terminal SQL_FOR;
+terminal SQL_FORCE;
+terminal SQL_FOREIGN;
+terminal SQL_FROM;
+terminal SQL_FULLTEXT;
+terminal SQL_GET;
+terminal SQL_GRANT;
+terminal SQL_GROUP;
+terminal SQL_HAVING;
+terminal SQL_HIGH_PRIORITY;
+terminal SQL_HOUR_MICROSECOND;
+terminal SQL_HOUR_MINUTE;
+terminal SQL_HOUR_SECOND;
+terminal SQL_IF;
+terminal SQL_IGNORE;
+terminal SQL_IN;
+terminal SQL_INDEX;
+terminal SQL_INFILE;
+terminal SQL_INNER;
+terminal SQL_INOUT;
+terminal SQL_INSENSITIVE;
+terminal SQL_INSERT;
+terminal SQL_INT;
+terminal SQL_INT1;
+terminal SQL_INT2;
+terminal SQL_INT3;
+terminal SQL_INT4;
+terminal SQL_INT8;
+terminal SQL_INTEGER;
+terminal SQL_INTERVAL;
+terminal SQL_INTO;
+terminal SQL_IO_AFTER_GTIDS;
+terminal SQL_IO_BEFORE_GTIDS;
+terminal SQL_IS;
+terminal SQL_ITERATE;
+terminal SQL_JOIN;
+terminal SQL_KEY;
+terminal SQL_KEYS;
+terminal SQL_KILL;
+terminal SQL_LEADING;
+terminal SQL_LEAVE;
+terminal SQL_LEFT;
+terminal SQL_LIKE;
+terminal SQL_LIMIT;
+terminal SQL_LINEAR;
+terminal SQL_LINES;
+terminal SQL_LOAD;
+terminal SQL_LOCALTIME;
+terminal SQL_LOCALTIMESTAMP;
+terminal SQL_LOCK;
+terminal SQL_LONG;
+terminal SQL_LONGBLOB;
+terminal SQL_LONGTEXT;
+terminal SQL_LOOP;
+terminal SQL_LOW_PRIORITY;
+terminal SQL_MASTER_BIND;
+terminal SQL_MASTER_SSL_VERIFY_SERVER_CERT;
+terminal SQL_MATCH;
+terminal SQL_MAXVALUE;
+terminal SQL_MEDIUMBLOB;
+terminal SQL_MEDIUMINT;
+terminal SQL_MEDIUMTEXT;
+terminal SQL_MIDDLEINT;
+terminal SQL_MINUTE_MICROSECOND;
+terminal SQL_MINUTE_SECOND;
+terminal SQL_MOD;
+terminal SQL_MODIFIES;
+terminal SQL_NATURAL;
+terminal SQL_NOT;
+terminal SQL_NO_WRITE_TO_BINLOG;
+terminal SQL_NULL;
+terminal SQL_NUMERIC;
+terminal SQL_ON;
+terminal SQL_OPTIMIZE;
+terminal SQL_OPTION;
+terminal SQL_OPTIONALLY;
+terminal SQL_OR;
+terminal SQL_ORDER;
+terminal SQL_OUT;
+terminal SQL_OUTER;
+terminal SQL_OUTFILE;
+terminal SQL_PARTITION;
+terminal SQL_PRECISION;
+terminal SQL_PRIMARY;
+terminal SQL_PROCEDURE;
+terminal SQL_PURGE;
+terminal SQL_RANGE;
+terminal SQL_READ;
+terminal SQL_READS;
+terminal SQL_READ_WRITE;
+terminal SQL_REAL;
+terminal SQL_REFERENCES;
+terminal SQL_REGEXP;
+terminal SQL_RELEASE;
+terminal SQL_RENAME;
+terminal SQL_REPEAT;
+terminal SQL_REPLACE;
+terminal SQL_REQUIRE;
+terminal SQL_RESIGNAL;
+terminal SQL_RESTRICT;
+terminal SQL_RETURN;
+terminal SQL_REVOKE;
+terminal SQL_RIGHT;
+terminal SQL_RLIKE;
+terminal SQL_SCHEMA;
+terminal SQL_SCHEMAS;
+terminal SQL_SECOND_MICROSECOND;
+terminal SQL_SELECT;
+terminal SQL_SENSITIVE;
+terminal SQL_SEPARATOR;
+terminal SQL_SET;
+terminal SQL_SHOW;
+terminal SQL_SIGNAL;
+terminal SQL_SMALLINT;
+terminal SQL_SPATIAL;
+terminal SQL_SPECIFIC;
+terminal SQL_SQL;
+terminal SQL_SQLEXCEPTION;
+terminal SQL_SQLSTATE;
+terminal SQL_SQLWARNING;
+terminal SQL_SQL_BIG_RESULT;
+terminal SQL_SQL_CALC_FOUND_ROWS;
+terminal SQL_SQL_SMALL_RESULT;
+terminal SQL_SSL;
+terminal SQL_STARTING;
+terminal SQL_STRAIGHT_JOIN;
+terminal SQL_TABLE;
+terminal SQL_TERMINATED;
+terminal SQL_THEN;
+terminal SQL_TINYBLOB;
+terminal SQL_TINYINT;
+terminal SQL_TINYTEXT;
+terminal SQL_TO;
+terminal SQL_TRAILING;
+terminal SQL_TRIGGER;
+terminal SQL_TRUE;
+terminal SQL_UNDO;
+terminal SQL_UNION;
+terminal SQL_UNIQUE;
+terminal SQL_UNLOCK;
+terminal SQL_UNSIGNED;
+terminal SQL_UPDATE;
+terminal SQL_USAGE;
+terminal SQL_USE;
+terminal SQL_USING;
+terminal SQL_UTC_DATE;
+terminal SQL_UTC_TIME;
+terminal SQL_UTC_TIMESTAMP;
+terminal SQL_VALUES;
+terminal SQL_VARBINARY;
+terminal SQL_VARCHAR;
+terminal SQL_VARCHARACTER;
+terminal SQL_VARYING;
+terminal SQL_WHEN;
+terminal SQL_WHERE;
+terminal SQL_WHILE;
+terminal SQL_WITH;
+terminal SQL_WRITE;
+terminal SQL_XOR;
+terminal SQL_YEAR_MONTH;
+terminal SQL_ZEROFILL;
+
+
+
+
+
+non terminal SqlSelect				sqlSelect;
+non terminal SqlExpr				sqlSelect_where;
+non terminal SqlSelectSourceList	sqlSelect_from;
+non terminal SqlOrderElementList 	sqlSelect_order;
+non terminal SqlLimit				sqlSelect_limit;
+non terminal SqlSelectColumn		sqlSelectColumn;
+non terminal SqlSelectColumnList	sqlSelectColumnList;
+non terminal SqlExpr				sqlExpression;
+non terminal SqlColumnExpr			sqlColumnExpr;
+non terminal SqlSelectSourceList	sqlSelectSourceList;
+non terminal SqlSelectSource		sqlSelectSource;
+non terminal SqlOrderElementList 	sqlSelectOrderElementList;
+non terminal SqlOrderElement	 	sqlSelectOrderElement;
+
+
+
+project ::= 
+				PROJECT IDENT:i SC package_dekl:p blockList:l
+                    {: RESULT = new Project(i,p, l); :};
+                    
+ident_list ::=
+				IDENT:e COMMA ident_list:l
+					{: RESULT = l.append(e); :}
+			|	IDENT:e
+					{: RESULT = new StringList(e); :};
+
+package_dekl ::= 
+				PACKAGE IDENT:r package_path:p SC
+					{: RESULT = new PackageDekl0(r, p); :}
+			|	
+					{: RESULT = new PackageDekl1(); :};
+
+package_path ::= 
+				DOT IDENT:s package_path:p
+					{: RESULT = new PackageDekl0(s, p); :}
+			|	 
+					{: RESULT = new PackageDekl1(); :};
+	
+column_dekl ::=
+				IDENT:s optionalBracedIdent:p AS column_type_dekl:t default_value:d
+					{: RESULT = new SingleColumnDekl(s, p, t, d); :}
+			|	IDENT:s OLBRACE INTCONST:l ORBRACE optionalBracedIdent:p AS column_type_dekl:t default_value:d
+					{: RESULT = new ArrayColumnDekl(s, l, p, t, d); :};
+					
+column_dekl_list ::= 
+				column_dekl_list:l COMMA column_dekl:e
+					{: RESULT = l.append(e); :}
+			|	column_dekl:e
+					{: RESULT = new ColumnDeklList(e); :};
+					
+optionalParamList ::=
+				LBRACE column_dekl_list:l RBRACE
+					{: RESULT = l; :}
+			|	LBRACE RBRACE
+					{: RESULT = new ColumnDeklList(); :}
+			|
+					{: RESULT = new ColumnDeklList(); :};
+				
+optionalBracedIdent ::=
+				LBRACE IDENT:s RBRACE
+					{: RESULT = s; :}
+			|
+					{: RESULT = null; :};
+					
+default_value ::=
+				EQ AUTO_ID
+					{: RESULT = new DefaultAuto(); :}
+			|	EQ NULL
+					{: RESULT = new DefaultConstNull(); :}
+			| 	EQ INTCONST:v
+					{: RESULT = new DefaultConstInt(v); :}
+			|	EQ STRINGCONST:v
+					{: RESULT = new DefaultConstString(v); :}
+			|	EQ BOOLCONST:v
+					{: RESULT = new DefaultConstBool(v); :}
+			|	
+					{: RESULT = null; :};
+					
+column_type_dekl ::= 
+				NULLABLE nonnullable_column_dekl:r
+					{: RESULT = new NullableColumnDekl(r); :}
+			|	nonnullable_column_dekl:r
+					{: RESULT = r; :};
+					
+nonnullable_column_dekl ::=
+				STRING LBRACE INTCONST:l RBRACE
+					{: RESULT = new StringType(l); :}
+			|	DATE
+					{: RESULT = new DateType(); :}
+			|	TIME
+					{: RESULT = new TimeType(); :}
+			|	DATETIME
+					{: RESULT = new DateTimeType(); :}
+			|	INT
+					{: RESULT = new IntType(); :}
+			|	BOOL
+					{: RESULT = new BooleanType(); :}
+			|	CHAR
+					{: RESULT = new CharType(); :}
+			|	TEXT
+					{: RESULT = new TextType(); :}
+			|	ID
+					{: RESULT = new IDType(); :}
+			|	DOUBLE
+					{: RESULT = new DoubleType(); :}
+			| 	ENUM LBRACE IDENT:s RBRACE
+					{: RESULT = new EnumType(s); :}
+			|	REFERENCE LBRACE IDENT:t RBRACE
+					{: RESULT = new TableReferenceType(t); :}
+			|	REFERENCE LBRACE IDENT:t DOT IDENT:c RBRACE
+					{: RESULT = new ColumnReferenceType(t, c); :};
+
+enum_dekl ::=
+				DEFINE TYPE LBRACE ENUM_DEF RBRACE IDENT:s OPEN ident_list:o CLOSE
+					{: RESULT = new EnumDekl(s, o); :};
+					
+string_list ::=
+				string_list:l COMMA IDENT:s
+					{: RESULT = l.append(s); :}
+			|	IDENT:s
+					{: RESULT = new StringList(s); :};
+					
+
+block ::=
+				enum_dekl:d
+					{: RESULT = d; :}
+			|	selectDekl:d
+					{: RESULT = d; :}
+			|	tableDekl:d
+					{: RESULT = d; :};
+					
+blockList ::=
+				block:b blockList:l
+					{: RESULT = l.append(b); :}
+			|	block:b
+					{: RESULT = new ProjectDeklBlockList(b); :};
+					
+tableDekl ::= DEFINE TABLE IDENT:n optionalBracedIdent:p OPEN tableDekl_primary:prim tableDekl_data:data tableDekl_indices:ind CLOSE
+					{: RESULT = new TableDekl(n, p, prim, data, ind); :};
+					
+selectDekl ::= DEFINE SELECT_DEF IDENT:n optionalParamList:p OPEN sqlSelect:s CLOSE
+					{: RESULT = new SelectDekl(n, p, s); :};
+
+                    
+tableDekl_primary ::=
+				PRIMARY OPEN column_dekl_list:l CLOSE
+					{: RESULT = l; :}
+			|	
+					{: RESULT = new ColumnDeklList(); :};
+                    
+tableDekl_data ::=
+				DATA OPEN column_dekl_list:l CLOSE
+					{: RESULT = l; :}
+			|	
+					{: RESULT = new ColumnDeklList(); :};
+					
+tableDekl_indices ::=
+				INDICES OPEN index_dekl_list:l CLOSE
+					{: RESULT = l; :}
+			|
+					{: RESULT = new IndexDeklList(); :};
+					
+index_dekl_list ::=
+				index_dekl:e COMMA index_dekl_list:l
+					{: RESULT = l.append(e); :}
+			|	index_dekl:e
+					{: RESULT = new IndexDeklList(e); :};
+					
+index_dekl ::=
+				FULLTEXT INDEX OPEN string_list:l CLOSE
+					{: RESULT = new IndexDekl(true, false, l); :}
+			|	INDEX OPEN string_list:l CLOSE
+					{: RESULT = new IndexDekl(false, false, l); :}
+			|	FULLTEXT UNIQUE OPEN string_list:l CLOSE
+					{: RESULT = new IndexDekl(true, true, l); :}
+			|	UNIQUE OPEN string_list:l CLOSE
+					{: RESULT = new IndexDekl(false, true, l); :};
+					
+					
+/* SQL Definition */
+sqlSelect ::=	
+				SQL_SELECT sqlSelectColumnList:c sqlSelect_from:f sqlSelect_where:w sqlSelect_order:o sqlSelect_limit:l
+					{: RESULT = new SqlSelect(c, f, w, o, l); :};
+					
+sqlSelect_from ::=
+				SQL_FROM sqlSelectSourceList:l
+					{: RESULT = l; :}
+			|	
+					{: RESULT = new SqlSelectSourceList(); :};
+				
+sqlSelect_where ::=
+				SQL_WHERE sqlExpression:e
+					{: RESULT = e; :}
+			|
+					{: RESULT = new SqlConstBoolExpr(true); :};
+
+sqlSelect_limit ::= 
+				SQL_LIMIT sqlExpression:o COMMA sqlExpression:l
+					{: RESULT = new SqlSpecLimit(o, l); :}
+			|	
+					{: RESULT = new SqlNoLimit(); :};
+					
+sqlSelect_order ::=
+				SQL_ORDER sqlSelectOrderElementList:l
+					{: RESULT = l; :}
+			|
+					{: RESULT = new SqlOrderElementList(); :};
+					
+
+				
+					
+					
+sqlSelectColumnList ::= 
+				sqlSelectColumnList:l COMMA sqlSelectColumn:c
+					{: RESULT = l.append(c); :}
+			|	sqlSelectColumn:c
+					{: RESULT = new SqlSelectColumnList(c); :};
+					
+sqlSelectOrderElementList ::= 
+				sqlSelectOrderElementList:l COMMA sqlSelectOrderElement:c
+					{: RESULT = l.append(c); :}
+			|	sqlSelectOrderElement:c
+					{: RESULT = new SqlOrderElementList(c); :};
+					
+sqlSelectSourceList ::= 
+				sqlSelectSourceList:l COMMA sqlSelectSource:c
+					{: RESULT = l.append(c); :}
+			|	sqlSelectSource:c
+					{: RESULT = new SqlSelectSourceList(c); :};
+					
+sqlSelectColumn ::=
+				sqlExpression:e AS IDENT:s
+					{: RESULT = new SqlSelectColumn(e, s); :}
+			|	sqlExpression:e
+					{: RESULT = new SqlSelectColumn(e, null); :};
+					
+sqlSelectOrderElement ::=
+				sqlColumnExpr:c SQL_ASC
+					{: RESULT = new SqlOrderElement(c, true); :}
+			|	sqlColumnExpr:c SQL_DESC
+					{: RESULT = new SqlOrderElement(c, false); :};
+				
+sqlExpression ::=
+				NULL
+					{: RESULT = new SqlNullExpr(); :}
+			|	sqlColumnExpr:e
+					{: RESULT = e; :};
+
+sqlSelectSource ::=
+				IDENT:n AS IDENT:a
+					{: RESULT = new SqlTableSelectSource(n, a, false); :};
+
+sqlColumnExpr ::= 
+				IDENT:t DOT IDENT:c
+					{: RESULT = new SqlColumnExpr(t, c); :};
+	

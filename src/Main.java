@@ -27,7 +27,7 @@
 
 import java.io.*;
 
-import de.brainiiiii.sqlgen.*;
+import de.brainiiiii.sqlgen.parser.*;
 
 
 

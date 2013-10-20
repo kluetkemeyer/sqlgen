@@ -66,7 +66,7 @@
      />
   </target>
 
-  <target name="cup" depends="classgen">
+  <target name="cup" depends="init">
     <cup srcfile="${cup}/Parser.cup" 
          destdir="${java}" 
          interface="true"
@@ -74,11 +74,11 @@
     />
   </target>
 
-  <target name="jflex" depends="cup">
+  <target name="jflex" depends="init">
     <jflex file="${flex}/Scanner.jflex" destdir="${java}" />
   </target>
 
-  <target name="copy_src" depends="jflex">
+  <target name="copy_src" depends="classgen, cup, jflex">
    <copy todir="${java}">
      <fileset dir="${src}" includes="**/**.java" />
    </copy>
@@ -100,7 +100,7 @@
 
   <target name="run" depends="dist">
     <java classname="Main" fork="true">
-      <arg value="examples/example.sqlg" />
+      <arg value="test.sql" />
       <classpath refid="binaries" />
     </java>
   </target>
