@@ -42,6 +42,8 @@ import java_cup.runtime.Symbol;
 
 Ident = [a-zA-Z_] [a-zA-Z0-9_]*
 
+StringLiteral = \" [^\"]* \"
+
 IntLiteral = 0 | [1-9][0-9]*
 
 new_line = \r|\n|\r\n;
@@ -882,12 +884,13 @@ white_space = {new_line} | [ \t\f]
   
 /* literals */
 {IntLiteral} 		{ return symbol(CONST_INT, new Integer(Integer.parseInt(yytext()))); } 
+{StringLiteral}		{ return symbol(CONST_STRING, yytext()); }
 "TRUE"				{ return symbol(CONST_BOOL, true); }
 "FALSE"				{ return symbol(CONST_BOOL, false); }
 
 
 /* names */
-{Ident}           	{ return symbol(IDENT, yytext()); }
+{Ident}           	{ return symbol(IDENT, yytext().substring(1)); }
 
 
 /* separators */
