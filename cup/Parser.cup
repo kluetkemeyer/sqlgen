@@ -80,6 +80,8 @@ terminal 			SQL_A, SQL_ABORT, SQL_ABS, SQL_ABSOLUTE, SQL_ACCESS,
 non terminal SqlExpr sqlExpr;
 non terminal SqlExprList sqlExprList;
 non terminal SqlColExpr sqlColExpr;
+non terminal Integer sqlUnaryOperator;
+non terminal Integer sqlBinaryOperator;
 
 
 precedence left		SQL_AND, SQL_OR;
@@ -97,38 +99,44 @@ sqlExpr ::=			CONST_INT:v
 						{: RESULT = new SqlConstBoolExpr(v); :}
 				|	SQL_NULL:v
 						{: RESULT = new SqlConstNullExpr(); :}
-				|	SQL_NOT sqlExpr:e
-						{: RESULT = new SqlUnaryExpr(SqlUnaryOperator.NOT, e); :}
-				|	SQL_IS SQL_NULL sqlExpr:e
-						{: RESULT = new SqlUnaryExpr(SqlUnaryOperator.IS_NULL, e); :}
-				|	S_MINUS sqlExpr:e
-						{: RESULT = new SqlUnaryExpr(SqlUnaryOperator.MINUS, e); :}
-				|	sqlExpr:a SQL_AND sqlExpr:b
-						{: RESULT = new SqlBinaryExpr(SqlBinaryOperator.AND, a, b); :}
-				|	sqlExpr:a SQL_OR sqlExpr:b
-						{: RESULT = new SqlBinaryExpr(SqlBinaryOperator.OR, a, b); :}
-				|	sqlExpr:a S_PLUS sqlExpr:b
-						{: RESULT = new SqlBinaryExpr(SqlBinaryOperator.PLUS, a, b); :}
-				|	sqlExpr:a S_MINUS sqlExpr:b
-						{: RESULT = new SqlBinaryExpr(SqlBinaryOperator.MINUS, a, b); :}
-				|	sqlExpr:a S_MULT sqlExpr:b
-						{: RESULT = new SqlBinaryExpr(SqlBinaryOperator.MULT, a, b); :}
-				|	sqlExpr:a S_DIV sqlExpr:b
-						{: RESULT = new SqlBinaryExpr(SqlBinaryOperator.DIV, a, b); :}
-				|	sqlExpr:a S_LE sqlExpr:b
-						{: RESULT = new SqlBinaryExpr(SqlBinaryOperator.LE, a, b); :}
-				|	sqlExpr:a S_LT sqlExpr:b
-						{: RESULT = new SqlBinaryExpr(SqlBinaryOperator.LT, a, b); :}
-				|	sqlExpr:a S_EQ sqlExpr:b
-						{: RESULT = new SqlBinaryExpr(SqlBinaryOperator.EQ, a, b); :}
-				|	sqlExpr:a S_GT sqlExpr:b
-						{: RESULT = new SqlBinaryExpr(SqlBinaryOperator.GT, a, b); :}
-				|	sqlExpr:a S_GE sqlExpr:b
-						{: RESULT = new SqlBinaryExpr(SqlBinaryOperator.GE, a, b); :}
+				|	sqlUnaryOperator:o sqlExpr:e
+						{: RESULT = new SqlUnaryExpr(o, e); :}
+				|	sqlExpr:a sqlBinaryOperator:o sqlExpr:b
+						{: RESULT = new SqlBinaryExpr(o, a, b); :}
 				|	sqlExpr:c SQL_IN S_LBRACE sqlExprList:l S_RBRACE
 						{: RESULT = new SqlInExpr(c, l); :}
 				|	sqlColExpr:e
 						{: RESULT = e; :};
+						
+sqlUnaryOperator ::= SQL_NOT
+						{: RESULT = SqlUnaryOperator.NOT; :}
+				|	SQL_IS SQL_NULL
+						{: RESULT = SqlUnaryOperator.IS_NULL; :}
+				|	SQL_MINUS
+						{: RESULT = SqlUnaryOperator.MINUS; :};
+						
+sqlBinaryOperator ::= SQL_AND
+						{: RESULT = SqlBinaryOperator.AND; :}
+				|	SQL_OR
+						{: RESULT = SqlBinaryOperator.OR; :}
+				|	S_PLUS
+						{: RESULT = SqlBinaryOperator.PLUS; :}
+				|	S_MINUS
+						{: RESULT = SqlBinaryOperator.MINUS; :}
+				|	S_MULT
+						{: RESULT = SqlBinaryOperator.MULT; :}
+				|	S_DIV
+						{: RESULT = SqlBinaryOperator.DIV; :}
+				|	S_LE
+						{: RESULT = SqlBinaryOperator.LE; :}
+				|	S_LT
+						{: RESULT = SqlBinaryOperator.LT; :}
+				|	S_EQ
+						{: RESULT = SqlBinaryOperator.EQ; :}
+				|	S_GT
+						{: RESULT = SqlBinaryOperator.GT; :}
+				|	S_GE
+						{: RESULT = SqlBinaryOperator.GE; :};
 
 sqlExprList ::= 	sqlExprList:l S_COMMA sqlExpr:e
 						{: RESULT = l.append(e); :}
