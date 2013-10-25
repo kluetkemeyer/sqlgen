@@ -4,7 +4,8 @@ import de.brainiiiii.sqlgen.tree.SqlBinaryExpr;
 import de.brainiiiii.sqlgen.tree.SqlBinaryOperator;
 import de.brainiiiii.sqlgen.tree.SqlConstIntExpr;
 import de.brainiiiii.sqlgen.tree.SqlColExpr;
-import de.brainiiiii.sqlgen.tree.SqlSelectColumn;
+import de.brainiiiii.sqlgen.tree.SqlNamedSelectColumn;
+import de.brainiiiii.sqlgen.tree.SqlAnonymousSelectColumn;
 
 class SqlGenerator extends AbstractGenerator {
 	
@@ -44,10 +45,14 @@ class SqlGenerator extends AbstractGenerator {
 		 this.code.append(")");
 		}
 		 
-	public void visit(SqlSelectColumn expr) {
+	public void visit(SqlNamedSelectColumn expr) {
 		expr.expr.accept(this);
 		this.code.append(" AS ");
 		this.appendName(expr.alias);
+	}
+		 
+	public void visit(SqlAnonymousSelectColumn expr) {
+		expr.expr.accept(this);
 	}
 }
 	
