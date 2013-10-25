@@ -52,6 +52,13 @@ white_space = {new_line} | [ \t\f]
 
 %%
 
+/* Scanner for reserved SQLgen words */
+"project" { return symbol(GEN_PROJECT); }
+"define" { return symbol(GEN_DEFINE); }
+"statement" { return symbol(GEN_STMT); }
+"private" { return symbol(GEN_PRIVATE); }
+"public" { return symbol(GEN_PUBLIC); }
+"enumeration" { return symbol(GEN_ENUMERATION); }
 
 /* Scanner for reserved SQL words */
 "A"	{ return symbol(SQL_A); }
@@ -884,13 +891,13 @@ white_space = {new_line} | [ \t\f]
   
 /* literals */
 {IntLiteral} 		{ return symbol(CONST_INT, new Integer(Integer.parseInt(yytext()))); } 
-{StringLiteral}		{ return symbol(CONST_STRING, yytext()); }
+{StringLiteral}		{ return symbol(CONST_STRING, yytext().substring(1, yytext().length()-1)); }
 "TRUE"				{ return symbol(CONST_BOOL, true); }
 "FALSE"				{ return symbol(CONST_BOOL, false); }
 
 
 /* names */
-{Ident}           	{ return symbol(IDENT, yytext().substring(1)); }
+{Ident}           	{ return symbol(IDENT, yytext()); }
 
 
 /* separators */

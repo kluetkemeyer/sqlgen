@@ -43,11 +43,15 @@ terminal	Boolean	CONST_BOOL;
 terminal	String	CONST_STRING;
 
 
+
 /* Terminals for symbols */
 terminal			S_SEMICOLON, S_DOT, S_COMMA, S_LBRACE, S_RBRACE,
 					S_OPEN, S_CLOSE, S_EQ, S_PLUS, S_MINUS, S_OLBRACE,
 					S_ORBRACE, S_MULT, S_DIV, S_LE, S_LT, S_GE, S_GT;
 
+/* Terminals for SQLgen Statements */
+terminal			GEN_DEFINE, GEN_STMT, GEN_PRIVATE, GEN_PUBLIC, 
+					GEN_PROJECT, GEN_ENUMERATION;
 
 /* Terminals for SQL Statements */
 terminal 			SQL_A, SQL_ABORT, SQL_ABS, SQL_ABSOLUTE, SQL_ACCESS,
@@ -80,7 +84,7 @@ terminal 			SQL_A, SQL_ABORT, SQL_ABS, SQL_ABSOLUTE, SQL_ACCESS,
 
 non terminal SqlExpr sqlExpr;
 non terminal SqlFieldExpr sqlFieldExpr;
-non terminal SqlExprList sqlExprList;
+non terminal SqlExprList sqlExprList, sqlOptionalExprList;
 non terminal Integer sqlUnaryOperator;
 non terminal Integer sqlBinaryOperator;
 non terminal SqlSelectColumn sqlSelectColumn;
@@ -95,6 +99,18 @@ non terminal SqlExpr sqlJoinCondition;
 non terminal SqlJoin sqlJoin;
 non terminal SqlJoinList sqlJoinList;
 non terminal SqlJoinList sqlOptionalJoinList;
+non terminal SqlStmt sqlStmt;
+
+non terminal Integer genAccessLevel;
+non terminal GenStmtDefinition genStmtDefinition;
+non terminal GenDocument genDocument;
+non terminal GenBlock genBlock;
+non terminal GenBlockList genBlockList, genOptionalBlockList;
+non terminal GenEnumDefinition genEnumDefinition;
+non terminal GenMethodCall genMethodCall;
+
+non terminal StringList identList;
+non terminal StringList optionalIdentList;
 
 
 precedence left		SQL_AND, SQL_OR;
@@ -107,6 +123,54 @@ precedence left		SQL_CROSS, SQL_INNER, SQL_OUTER;
 precedence left		SQL_LEFT, SQL_RIGHT;
 
 
+genDocument ::= 	GEN_PROJECT CONST_STRING:pr genOptionalBlockList:bl
+						{: RESULT = new GenDocument(pr, bl); :};
+						
+genOptionalBlockList ::= genBlockList:l
+						{: RESULT = l; :}
+				|	/* no blocks */
+						{: RESULT = new GenBlockList(); :};
+						
+genBlockList ::= 	genBlock:b
+						{: RESULT = new GenBlockList(b); :}
+				|	genBlockList:l genBlock:b
+						{: RESULT = l.append(b); :};
+						
+genBlock ::= 		genStmtDefinition:r
+						{: RESULT = r; :}
+				|	genEnumDefinition:r
+						{: RESULT = r; :};
+						
+genEnumDefinition ::= GEN_DEFINE GEN_ENUMERATION IDENT:n S_OPEN identList:l S_CLOSE
+						{: RESULT = new GenEnumDefinition(n, l); :};
+
+genStmtDefinition ::= GEN_DEFINE genAccessLevel:a GEN_STMT IDENT:n S_LBRACE optionalIdentList:pl S_RBRACE S_OPEN sqlStmt:s S_CLOSE
+						{: RESULT = new GenStmtDefinition(a, n, pl, s); :};
+
+genAccessLevel ::=	GEN_PRIVATE
+						{: RESULT = GenAccessLevel.PRIVATE; :}
+				|	GEN_PUBLIC
+						{: RESULT = GenAccessLevel.PUBLIC; :};
+						
+genMethodCall ::=	IDENT:s S_LBRACE sqlOptionalExprList:pl S_RBRACE
+						{: RESULT = new GenMethodCall(s, pl); :};
+						
+
+identList ::=		IDENT:s
+						{: RESULT = new StringList(s); :}
+				|	identList:l S_COMMA IDENT:s
+						{: RESULT = l.append(s); :};
+						
+optionalIdentList ::= identList:l
+						{: RESULT = l; :}
+				| /* no idents */
+						{: RESULT = new StringList(); :};
+
+						
+sqlStmt ::=			sqlSelect:s
+						{: RESULT = s; :}
+				|	genMethodCall:s
+						{: RESULT = s; :};
 						
 sqlSelect ::= 		SQL_SELECT sqlSelectColumnList:cl sqlSelectFrom:fl sqlOptionalJoinList:jl sqlSelectWhere:w
 						{: RESULT = new SqlSelect(cl, fl, jl, w); :};
@@ -133,7 +197,9 @@ sqlExpr ::=			CONST_INT:v
 				|	IDENT:m S_LBRACE sqlExprList:pl S_RBRACE
 						{: RESULT = new SqlMethodCallExpr(m, pl); :}
 				|	S_LBRACE sqlSelect:s S_RBRACE
-						{: RESULT = new SqlSelectExpr(s); :};
+						{: RESULT = new SqlSelectExpr(s); :}
+				|	IDENT:n
+						{: RESULT = new SqlParamExpr(n); :};
 						
 sqlUnaryOperator ::= SQL_NOT
 						{: RESULT = SqlUnaryOperator.NOT; :}
@@ -169,6 +235,11 @@ sqlExprList ::= 	sqlExprList:l S_COMMA sqlExpr:e
 						{: RESULT = l.append(e); :}
 				|	sqlExpr:e
 						{: RESULT = new SqlExprList(e); :};
+
+sqlOptionalExprList ::=	sqlExprList:l
+						{: RESULT = l; :}
+				|	/* no expressions */
+						{: RESULT = new SqlExprList(); :};
 						
 sqlFieldExpr ::=	IDENT:t S_DOT IDENT:c
 						{: RESULT = new SqlColExpr(t, c); :}
@@ -192,8 +263,8 @@ sqlSelectWhere ::= 	SQL_WHERE sqlExpr:e
 				| 	/* no where condition */
 						{: RESULT = new SqlConstBoolExpr(true); :};
 
-sqlSource ::=		S_LBRACE sqlSelect:s S_RBRACE SQL_AS IDENT:a
-						{: RESULT = new SqlSelectSource(s, a); :}
+sqlSource ::=		S_LBRACE sqlStmt:s S_RBRACE SQL_AS IDENT:a
+						{: RESULT = new SqlStmtSource(s, a); :}
 				|	IDENT:t SQL_AS IDENT:a
 						{: RESULT = new SqlTableSource(t, a); :}
 				|	IDENT:t
