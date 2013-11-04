@@ -59,6 +59,14 @@ white_space = {new_line} | [ \t\f]
 "private" { return symbol(GEN_PRIVATE); }
 "public" { return symbol(GEN_PUBLIC); }
 "enumeration" { return symbol(GEN_ENUMERATION); }
+"entity" { return symbol(GEN_ENTITY); }
+"primary" { return symbol(GEN_PRIMARY); }
+"data" { return symbol(GEN_DATA); }
+"BYTE" { return symbol(GEN_BYTE); }
+"WORD" { return symbol(GEN_WORD); }
+"ID" { return symbol(GEN_ID); }
+"REFERENCE" { return symbol(GEN_REFERENCE); }
+"AUTO" { return symbol(GEN_AUTO); }
 
 /* Scanner for reserved SQL words */
 "A"	{ return symbol(SQL_A); }
@@ -904,6 +912,7 @@ white_space = {new_line} | [ \t\f]
 ";"				  	{ return symbol(S_SEMICOLON); }
 "."				  	{ return symbol(S_DOT); }
 ","					{ return symbol(S_COMMA); }
+":"					{ return symbol(S_COLON); }
 "("				  	{ return symbol(S_LBRACE); }
 ")"					{ return symbol(S_RBRACE); }
 "{"					{ return symbol(S_OPEN); }

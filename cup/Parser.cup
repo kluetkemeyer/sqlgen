@@ -47,11 +47,14 @@ terminal	String	CONST_STRING;
 /* Terminals for symbols */
 terminal			S_SEMICOLON, S_DOT, S_COMMA, S_LBRACE, S_RBRACE,
 					S_OPEN, S_CLOSE, S_EQ, S_PLUS, S_MINUS, S_OLBRACE,
-					S_ORBRACE, S_MULT, S_DIV, S_LE, S_LT, S_GE, S_GT;
+					S_ORBRACE, S_MULT, S_DIV, S_LE, S_LT, S_GE, S_GT,
+					S_COLON;
 
 /* Terminals for SQLgen Statements */
 terminal			GEN_DEFINE, GEN_STMT, GEN_PRIVATE, GEN_PUBLIC, 
-					GEN_PROJECT, GEN_ENUMERATION;
+					GEN_PROJECT, GEN_ENUMERATION, GEN_ENTITY, GEN_DATA,
+					GEN_PRIMARY, GEN_BYTE, GEN_WORD, GEN_ID,
+					GEN_REFERENCE, GEN_AUTO;
 
 /* Terminals for SQL Statements */
 terminal 			SQL_A, SQL_ABORT, SQL_ABS, SQL_ABSOLUTE, SQL_ACCESS,
@@ -108,9 +111,18 @@ non terminal GenBlock genBlock;
 non terminal GenBlockList genBlockList, genOptionalBlockList;
 non terminal GenEnumDefinition genEnumDefinition;
 non terminal GenMethodCall genMethodCall;
+non terminal GenEntityDefinition genEntityDefinition;
+non terminal GenColumnDefinition genColumnDefinition;
+non terminal GenColumnDefinitionList genColumnDefinitionList, 
+		genEntityPrimaryList, genEntityDataList;
+non terminal GenColumnType genColumnType;
+non terminal GenExpr genExpr;
+non terminal GenConcreteColumnType genConcreteColumnType;
+non terminal Integer genNumericDataType, genStringDataType, 
+		genTimestampDataType;
 
-non terminal StringList identList;
-non terminal StringList optionalIdentList;
+non terminal StringList identList, optionalIdentList;
+non terminal String bracedIdent, optionalBracedIdent;
 
 
 precedence left		SQL_AND, SQL_OR;
@@ -139,6 +151,8 @@ genBlockList ::= 	genBlock:b
 genBlock ::= 		genStmtDefinition:r
 						{: RESULT = r; :}
 				|	genEnumDefinition:r
+						{: RESULT = r; :}
+				|	genEntityDefinition:r
 						{: RESULT = r; :};
 						
 genEnumDefinition ::= GEN_DEFINE GEN_ENUMERATION IDENT:n S_OPEN identList:l S_CLOSE
@@ -146,6 +160,29 @@ genEnumDefinition ::= GEN_DEFINE GEN_ENUMERATION IDENT:n S_OPEN identList:l S_CL
 
 genStmtDefinition ::= GEN_DEFINE genAccessLevel:a GEN_STMT IDENT:n S_LBRACE optionalIdentList:pl S_RBRACE S_OPEN sqlStmt:s S_CLOSE
 						{: RESULT = new GenStmtDefinition(a, n, pl, s); :};
+						
+genEntityDefinition ::= GEN_DEFINE GEN_ENTITY IDENT:n optionalBracedIdent:p S_OPEN  genEntityPrimaryList:pl genEntityDataList:dl S_CLOSE
+						{: RESULT = new GenEntityDefinition(n, p, pl, dl); :};
+						
+genColumnDefinitionList ::= genColumnDefinitionList:l S_COMMA genColumnDefinition:e
+						{: RESULT = l.append(e); :}
+				|	genColumnDefinition:e
+						{: RESULT = new GenColumnDefinitionList(e); :};
+						
+genColumnDefinition ::=	IDENT:n optionalBracedIdent:p S_COLON genColumnType:t S_EQ genExpr:d
+						{: RESULT = new GenColumnDefinition(n, p, t, d); :}
+				|	IDENT:n optionalBracedIdent:p S_COLON genColumnType:t
+						{: RESULT = new GenColumnDefinition(n, p, t, null); :};
+
+genEntityPrimaryList ::= GEN_PRIMARY S_OPEN genColumnDefinitionList:l S_CLOSE
+						{: RESULT = l; :}
+				|	/* no primary cols */
+						{: RESULT = new GenColumnDefinitionList(); :};
+
+genEntityDataList ::= GEN_DATA S_OPEN genColumnDefinitionList:l S_CLOSE
+						{: RESULT = l; :}
+				|	/* no data cols */
+						{: RESULT = new GenColumnDefinitionList(); :};
 
 genAccessLevel ::=	GEN_PRIVATE
 						{: RESULT = GenAccessLevel.PRIVATE; :}
@@ -155,6 +192,90 @@ genAccessLevel ::=	GEN_PRIVATE
 genMethodCall ::=	IDENT:s S_LBRACE sqlOptionalExprList:pl S_RBRACE
 						{: RESULT = new GenMethodCall(s, pl); :};
 						
+genColumnType ::=	genConcreteColumnType:t
+						{: RESULT = new GenNonNullableColumnType(t); :}
+				|	SQL_NULLABLE genConcreteColumnType:t
+						{: RESULT = new GenNullableColumnType(t); :}
+				|	SQL_ARRAY S_OLBRACE CONST_INT:size S_ORBRACE SQL_OF genColumnType:t
+						{: RESULT = new GenArrayColumnType(size, t); :};
+			
+genStringDataType ::= SQL_CHAR
+						{: RESULT = GenStringDataType.CHAR; :}
+				|	SQL_STRING
+						{: RESULT = GenStringDataType.VARCHAR; :}
+				|	SQL_TEXT
+						{: RESULT = GenStringDataType.TEXT; :}
+				|	SQL_LONGTEXT
+						{: RESULT = GenStringDataType.LONGTEXT; :};
+			
+genNumericDataType ::= GEN_BYTE
+						{: RESULT = GenNumericDataType.BYTE; :}
+				|	GEN_WORD
+						{: RESULT = GenNumericDataType.WORD; :}
+				|	SQL_INT
+						{: RESULT = GenNumericDataType.INT; :}
+				|	SQL_LONG
+						{: RESULT = GenNumericDataType.LONGINT; :}
+				|	SQL_FLOAT
+						{: RESULT = GenNumericDataType.FLOAT; :}
+				|	SQL_DOUBLE
+						{: RESULT = GenNumericDataType.DOUBLE; :};
+						
+genTimestampDataType ::= SQL_TIME
+						{: RESULT = GenTimestampDataType.TIME; :}
+				|	SQL_DATE
+						{: RESULT = GenTimestampDataType.DATE; :}
+				|	SQL_DATETIME
+						{: RESULT = GenTimestampDataType.DATETIME; :};
+						
+genConcreteColumnType ::= GEN_ID
+						{: RESULT = new GenIdColumnType(); :}
+				|	genNumericDataType:t
+						{: RESULT = new GenNumericColumnType(t, 0); :}
+				|	genNumericDataType:t S_LBRACE CONST_INT:p S_RBRACE
+						{: RESULT = new GenNumericColumnType(t, p); :}
+				|	genStringDataType:t
+						{: RESULT = new GenStringColumnType(t, 0); :}
+				| 	genStringDataType:t S_LBRACE CONST_INT:l S_RBRACE
+						{: RESULT = new GenStringColumnType(t, l); :}
+				|	SQL_BOOL
+						{: RESULT = new GenBooleanColumnType(); :}
+				|	SQL_ENUM bracedIdent:n
+						{: RESULT = new GenEnumerationColumnType(n); :}
+				|	GEN_REFERENCE bracedIdent:n
+						{: RESULT = new GenReferenceColumnType(n); :}
+				|	genTimestampDataType:t
+						{: RESULT = new GenTimestampColumnType(t); :};
+						
+genExpr ::=			SQL_NULL
+						{: RESULT = new GenNullExpr(); :}
+				|	GEN_AUTO
+						{: RESULT = new GenAutoExpr(); :}
+				|	CONST_BOOL:v
+						{: RESULT = new GenBoolExpr(v); :}
+				|	CONST_INT:v
+						{: RESULT = new GenIntExpr(v); :}
+				|	CONST_STRING:v
+						{: RESULT = new GenStringExpr(v); :}
+				|	IDENT:e S_DOT IDENT:v
+						{: RESULT = new GenEnumerationExpr(e, v); :};
+		
+		
+						
+						
+						
+						
+						
+						
+						
+					
+bracedIdent ::=		S_LBRACE IDENT:s S_RBRACE
+						{: RESULT = s; :};
+						
+optionalBracedIdent ::=	bracedIdent:s
+						{: RESULT = s; :}
+				|	/* no ident and braces */
+						{: RESULT = ""; :};
 
 identList ::=		IDENT:s
 						{: RESULT = new StringList(s); :}
@@ -164,6 +285,29 @@ identList ::=		IDENT:s
 optionalIdentList ::= identList:l
 						{: RESULT = l; :}
 				| /* no idents */
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
 						{: RESULT = new StringList(); :};
 
 						
